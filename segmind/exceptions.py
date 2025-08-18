@@ -4,12 +4,26 @@ import httpx
 
 
 def raise_for_status(response: httpx.Response) -> None:
+    """Raise a SegmindError if the response status is not 200.
+
+    Args:
+        response: HTTP response to check
+
+    Raises:
+        SegmindError: If response status code is not 200
+    """
     if response.status_code != 200:
         raise SegmindError.from_response(response)
 
 
 class SegmindError(Exception):
-    """Base class for all Segmind errors."""
+    """Base class for all Segmind errors.
+
+    Attributes:
+        title: Error title (optional)
+        status: HTTP status code (optional)
+        detail: Error detail message (optional)
+    """
 
     title: Optional[str] = None
     status: Optional[int] = None
@@ -20,13 +34,25 @@ class SegmindError(Exception):
         status: Optional[int] = None,
         detail: Optional[str] = None,
     ) -> None:
+        """Initialize a SegmindError.
+
+        Args:
+            status: HTTP status code
+            detail: Error detail message
+        """
         self.status = status
         self.detail = detail
 
     @classmethod
     def from_response(cls, response: httpx.Response) -> "SegmindError":
-        """Create a ReplicateError from an HTTP response."""
+        """Create a SegmindError from an HTTP response.
 
+        Args:
+            response: HTTP response object
+
+        Returns:
+            SegmindError instance created from the response
+        """
         try:
             data = response.json()
         except ValueError:
@@ -38,8 +64,11 @@ class SegmindError(Exception):
         )
 
     def to_dict(self) -> dict:
-        """Get a dictionary representation of the error."""
+        """Get a dictionary representation of the error.
 
+        Returns:
+            Dictionary containing error details
+        """
         return {
             # "type": self.type,
             # "title": self.title,
@@ -48,18 +77,26 @@ class SegmindError(Exception):
         }
 
     def __str__(self) -> str:
-        return "\n-----SegmindError Details-----\n" + "\n".join(
-            [f"{key}: {value}" for key, value in self.to_dict().items()]
-        )
+        """Return a string representation of the error.
+
+        Returns:
+            Formatted error string
+        """
+        return "\n-----SegmindError Details-----\n" + "\n".join([
+            f"{key}: {value}" for key, value in self.to_dict().items()
+        ])
 
     def __repr__(self) -> str:
+        """Return a developer-friendly representation of the error.
+
+        Returns:
+            String representation for debugging
+        """
         class_name = self.__class__.__name__
-        params = ", ".join(
-            [
-                # f"type={self.type}",
-                # f"title={self.title}",
-                f"status={self.status}",
-                f"detail={self.detail}",
-            ]
-        )
+        params = ", ".join([
+            # f"type={self.type}",
+            # f"title={self.title}",
+            f"status={self.status}",
+            f"detail={self.detail}",
+        ])
         return f"{class_name}({params})"

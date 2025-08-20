@@ -3,6 +3,7 @@ from typing import Optional
 
 import httpx
 
+from segmind.accounts import Accounts
 from segmind.exceptions import raise_for_status
 from segmind.files import Files
 from segmind.generations import Generations
@@ -29,14 +30,6 @@ class SegmindClient:
         base_url: str = "https://api.segmind.com/v1",
         timeout: float = 30.0,
     ):
-        """Initialize the Segmind client.
-
-        Args:
-            api_key: API key for authentication. If not provided, will use
-                    SEGMIND_API_KEY environment variable.
-            base_url: Base URL for API requests (default: https://api.segmind.com/v1)
-            timeout: Timeout for HTTP requests in seconds (default: 30.0)
-        """
         self.api_key = api_key or os.getenv("SEGMIND_API_KEY")
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
@@ -89,6 +82,24 @@ class SegmindClient:
         """
         pass
 
+    def _request(self, method: str, path: str, **kwargs) -> httpx.Response:
+        """Make an HTTP request.
+
+        Args:
+            method: HTTP method (GET, POST, etc.)
+            path: API path (will be appended to base_url)
+            **kwargs: Additional arguments to pass to the request
+
+        Returns:
+            HTTP response from the API
+
+        Raises:
+            HTTPError: If the request fails
+        """
+        response = self._client.request(method, path, **kwargs)
+        raise_for_status(response)
+        return response
+
     @property
     def pixelflows(self) -> PixelFlows:
         """
@@ -123,3 +134,10 @@ class SegmindClient:
         Namespace for operations related to Generations.
         """
         return Generations(client=self)
+
+    @property
+    def accounts(self) -> Accounts:
+        """
+        Namespace for operations related to Accounts.
+        """
+        return Accounts(client=self)

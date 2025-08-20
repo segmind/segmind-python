@@ -34,12 +34,6 @@ class SegmindError(Exception):
         status: Optional[int] = None,
         detail: Optional[str] = None,
     ) -> None:
-        """Initialize a SegmindError.
-
-        Args:
-            status: HTTP status code
-            detail: Error detail message
-        """
         self.status = status
         self.detail = detail
 
@@ -82,9 +76,9 @@ class SegmindError(Exception):
         Returns:
             Formatted error string
         """
-        return "\n-----SegmindError Details-----\n" + "\n".join([
-            f"{key}: {value}" for key, value in self.to_dict().items()
-        ])
+        return "\n-----SegmindError Details-----\n" + "\n".join(
+            [f"{key}: {value}" for key, value in self.to_dict().items()]
+        )
 
     def __repr__(self) -> str:
         """Return a developer-friendly representation of the error.
@@ -93,10 +87,12 @@ class SegmindError(Exception):
             String representation for debugging
         """
         class_name = self.__class__.__name__
-        params = ", ".join([
-            # f"type={self.type}",
-            # f"title={self.title}",
-            f"status={self.status}",
-            f"detail={self.detail}",
-        ])
+        params = ", ".join(
+            [
+                # f"type={self.type}",
+                # f"title={self.title}",
+                f"status={self.status}",
+                f"detail={self.detail}",
+            ]
+        )
         return f"{class_name}({params})"

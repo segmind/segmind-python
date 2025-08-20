@@ -1,23 +1,46 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Union
+from typing import Any
 
-if TYPE_CHECKING:
-    from segmind.client import SegmindClient
+from segmind.resource import Namespace
 
 
-class Files:
+class Files(Namespace):
     """Client for Segmind Files API."""
 
-    def __init__(self, client: "SegmindClient"):
-        """Initialize Files client.
+    def upload(self, file_path: str | Path) -> dict[str, Any]:
+        """Upload a media file (image, audio, or video).
 
         Args:
-            client: SegmindClient instance to use for API calls.
-        """
-        self.client = client
-        self.upload_url = "https://api.spotprod.segmind.com/inference-request/input-upload"
+            file_path: Path to the media file to upload
 
-        self.content_types = {
+        Returns:
+            Dictionary containing the upload response
+
+        Raises:
+            FileNotFoundError: If the file doesn't exist
+            ValueError: If the file is not a supported media format
+        """
+        file_path = Path(file_path)
+
+        content_type = self.get_content_type(file_path)
+
+        with open(file_path, "rb") as f:
+            files = {"file": (file_path.name, f, content_type)}
+
+            url = "https://api.spotprod.segmind.com/inference-request/input-upload"
+            response = self._client._request("POST", url, files=files)
+            return response.json()
+
+    def get_content_type(self, file_path: Path) -> str:
+        """Check if the file is a supported media format and get the content type.
+
+        Args:
+            file_path: Path to the file
+
+        Returns:
+            Content type string if the file is a supported media format
+        """
+        content_types = {
             # Image formats
             ".png": "image/png",
             ".jpg": "image/jpeg",
@@ -53,57 +76,15 @@ class Files:
             ".mpg": "video/mpeg",
         }
 
-    def upload(self, file_path: Union[str, Path]) -> dict[str, Any]:
-        """Upload a media file (image, audio, or video).
-
-        Args:
-            file_path: Path to the media file to upload
-
-        Returns:
-            Dictionary containing the upload response
-
-        Raises:
-            FileNotFoundError: If the file doesn't exist
-            ValueError: If the file is not a supported media format
-        """
-        file_path = Path(file_path)
-
-        self.check_supported_media(file_path)
-
-        with open(file_path, "rb") as f:
-            files = {"file": (file_path.name, f, self._get_content_type(file_path))}
-
-            response = self.client._client.post(self.upload_url, files=files)
-            response.raise_for_status()
-            return response.json()
-
-    def check_supported_media(self, file_path: Path) -> None:
-        """Check if the file is a supported media format.
-
-        Args:
-            file_path: Path to the file
-
-        Returns:
-            True if the file is a supported media format
-        """
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
 
         if not file_path.is_file():
             raise ValueError(f"Path is not a file: {file_path}")
 
-        if file_path.suffix.lower() not in self.content_types:
+        if file_path.suffix.lower() not in content_types:
             raise ValueError(f"File is not a supported media format: {file_path}")
 
-    def _get_content_type(self, file_path: Path) -> str:
-        """Get the content type for a media file based on its extension.
-
-        Args:
-            file_path: Path to the media file
-
-        Returns:
-            Content type string
-        """
         extension = file_path.suffix.lower()
 
-        return self.content_types.get(extension, "application/octet-stream")
+        return content_types.get(extension, "application/octet-stream")

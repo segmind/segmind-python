@@ -1,21 +1,10 @@
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any, Optional
 
-if TYPE_CHECKING:
-    from segmind.client import SegmindClient
+from segmind.resource import Namespace
 
 
-class Generations:
+class Generations(Namespace):
     """Client for Segmind Generations API."""
-
-    def __init__(self, client: "SegmindClient"):
-        """Initialize Generations client.
-
-        Args:
-            client: SegmindClient instance to use for API calls.
-        """
-        self.client = client
-        self.recent_url = "https://api.spotprod.segmind.com/inference-request/recent-generations"
-        self.list_url = "https://api.spotprod.segmind.com/inference-request/generations"
 
     def recent(self, model_name: str) -> dict[str, Any]:
         """Get recent generations for a model.
@@ -27,8 +16,8 @@ class Generations:
             Dictionary containing recent generations response
         """
         params = {"model_name": model_name}
-        response = self.client._client.get(self.recent_url, params=params)
-        response.raise_for_status()
+        url = "https://api.spotprod.segmind.com/inference-request/recent-generations"
+        response = self._client._request("GET", url, params=params)
         return response.json()
 
     def list(
@@ -58,6 +47,6 @@ class Generations:
         if end_date:
             params["end_date"] = end_date
 
-        response = self.client._client.get(self.list_url, params=params)
-        response.raise_for_status()
+        url = "https://api.spotprod.segmind.com/inference-request/generations"
+        response = self._client._request("GET", url, params=params)
         return response.json()

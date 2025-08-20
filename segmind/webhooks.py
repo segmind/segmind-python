@@ -1,20 +1,12 @@
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-if TYPE_CHECKING:
-    from segmind.client import SegmindClient
+from segmind.resource import Namespace
 
 
-class Webhooks:
+class Webhooks(Namespace):
     """Client for Segmind Webhooks API."""
 
-    def __init__(self, client: "SegmindClient"):
-        """Initialize Webhooks client.
-
-        Args:
-            client: SegmindClient instance to use for API calls.
-        """
-        self.client = client
-        self.base_url = "https://api.spotprod.segmind.com/webhook"
+    base_url = "https://api.spotprod.segmind.com/webhook"
 
     def get(self) -> dict[str, Any]:
         """Get all webhooks.
@@ -22,10 +14,9 @@ class Webhooks:
         Returns:
             Dictionary containing the webhooks response
         """
-        self.get_url = f"{self.base_url}/get"
+        url = f"{self.base_url}/get"
 
-        response = self.client._client.get(self.get_url)
-        response.raise_for_status()
+        response = self._client._request("GET", url)
         return response.json()
 
     def add(self, webhook_url: str, event_types: list[str]) -> dict[str, Any]:
@@ -38,15 +29,14 @@ class Webhooks:
         Returns:
             Dictionary containing the add webhook response
         """
-        self.add_url = f"{self.base_url}/add"
+        url = f"{self.base_url}/add"
 
         if not event_types:
             raise ValueError("Event types must be specified")
 
         payload = {"webhook_url": webhook_url, "event": {"types": event_types}}
 
-        response = self.client._client.post(self.add_url, json=payload)
-        response.raise_for_status()
+        response = self._client._request("POST", url, json=payload)
         return response.json()
 
     def update(self, webhook_id: str, webhook_url: str, event_types: list[str]) -> dict[str, Any]:
@@ -60,7 +50,7 @@ class Webhooks:
         Returns:
             Dictionary containing the update webhook response
         """
-        self.update_url = f"{self.base_url}/update"
+        url = f"{self.base_url}/update"
 
         if not event_types:
             raise ValueError("Event types must be specified")
@@ -71,8 +61,7 @@ class Webhooks:
             "event": {"types": event_types},
         }
 
-        response = self.client._client.post(self.update_url, json=payload)
-        response.raise_for_status()
+        response = self._client._request("POST", url, json=payload)
         return response.json()
 
     def delete(self, webhook_id: str) -> dict[str, Any]:
@@ -84,11 +73,10 @@ class Webhooks:
         Returns:
             Dictionary containing the delete webhook response
         """
-        self.delete_url = f"{self.base_url}/inactive"
+        url = f"{self.base_url}/inactive"
 
         params = {"webhook_id": webhook_id}
-        response = self.client._client.get(self.delete_url, params=params)
-        response.raise_for_status()
+        response = self._client._request("GET", url, params=params)
         return response.json()
 
     def logs(self, webhook_id: str) -> dict[str, Any]:
@@ -100,9 +88,8 @@ class Webhooks:
         Returns:
             Dictionary containing the webhook dispatch logs
         """
-        self.logs_url = f"{self.base_url}/dispatch-logs"
+        url = f"{self.base_url}/dispatch-logs"
 
         params = {"webhook_id": webhook_id}
-        response = self.client._client.get(self.logs_url, params=params)
-        response.raise_for_status()
+        response = self._client._request("GET", url, params=params)
         return response.json()

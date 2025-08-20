@@ -1,24 +1,13 @@
 import contextlib
 import json
 import time
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import Any, Dict, Optional
 
-if TYPE_CHECKING:
-    from segmind.client import SegmindClient
+from segmind.resource import Namespace
 
 
-class PixelFlows:
+class PixelFlows(Namespace):
     """Client for Segmind PixelFlows API with polling support."""
-
-    def __init__(self, client: "SegmindClient"):
-        """Initialize PixelFlows client.
-
-        Args:
-            client: SegmindClient instance to use for API calls.
-        """
-        self.client = client
-        self.workflows_base = "https://api.segmind.com/workflows"
-        # q,segmind,com - same logic and headers
 
     def run(
         self,
@@ -47,11 +36,10 @@ class PixelFlows:
             raise ValueError("Either workflow_id or workflow_url must be provided")
 
         # Construct URL
-        url = f"{self.workflows_base}/{workflow_id}" if workflow_id else workflow_url
+        url = f"https://api.segmind.com/workflows/{workflow_id}" if workflow_id else workflow_url
 
         # Submit workflow request using the client
-        response = self.client._client.post(url, json=data or {})
-        response.raise_for_status()
+        response = self._client._request("POST", url, json=data or {})
 
         result = response.json()
 
@@ -67,8 +55,9 @@ class PixelFlows:
             return result
 
         # Construct poll URL if only poll_id is provided
+        # TODO: this is not correct, we need to use the poll_url from the response
         if not poll_url and poll_id:
-            poll_url = f"{self.workflows_base}/request/{poll_id}"
+            poll_url = f"https://api.segmind.com/workflows/request/{poll_id}"
 
         # Poll for results
         return self._poll_for_results(poll_url, poll_interval, max_wait_time)
@@ -97,8 +86,7 @@ class PixelFlows:
                 }
 
             # Poll for status using the client
-            response = self.client._client.get(poll_url)
-            response.raise_for_status()
+            response = self.client._request("GET", poll_url)
 
             result = response.json()
             status = result.get("status", "")
@@ -143,16 +131,14 @@ class PixelFlows:
         # Construct URL
         url = f"{self.workflows_base}/request/{poll_id}" if poll_id else poll_url
 
-        response = self.client._client.get(url)
-        response.raise_for_status()
+        response = self.client._request("GET", url)
 
         result = response.json()
 
         # Parse output if it's a string and status is COMPLETED
-        if result.get("status") == "COMPLETED" and "output" in result:
-            if isinstance(result["output"], str):
-                with contextlib.suppress(json.JSONDecodeError, TypeError):
-                    result["output"] = json.loads(result["output"])
+        if result.get("status") == "COMPLETED" and isinstance(result.get("output", None), str):
+            with contextlib.suppress(json.JSONDecodeError, TypeError):
+                result["output"] = json.loads(result["output"])
 
         return result
 

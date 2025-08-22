@@ -6,7 +6,7 @@ from segmind.resource import Namespace
 class Accounts(Namespace):
     """Client for Segmind Accounts API."""
 
-    def get(self) -> dict[str, Any]:
+    def current(self) -> dict[str, Any]:
         """Get account information.
 
         Returns:

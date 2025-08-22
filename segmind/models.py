@@ -6,7 +6,7 @@ from segmind.resource import Namespace
 class Models(Namespace):
     """Client for Segmind Models API."""
 
-    def get(self) -> dict[str, Any]:
+    def list(self) -> dict[str, Any]:
         """Get all available models.
 
         Returns:

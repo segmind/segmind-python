@@ -22,7 +22,7 @@ class Files(Namespace):
         """
         file_path = Path(file_path)
 
-        content_type = self.get_content_type(file_path)
+        content_type = self._get_content_type(file_path)
 
         with open(file_path, "rb") as f:
             files = {"file": (file_path.name, f, content_type)}
@@ -31,7 +31,7 @@ class Files(Namespace):
             response = self._client._request("POST", url, files=files)
             return response.json()
 
-    def get_content_type(self, file_path: Path) -> str:
+    def _get_content_type(self, file_path: Path) -> str:
         """Check if the file is a supported media format and get the content type.
 
         Args:

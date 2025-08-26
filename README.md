@@ -30,26 +30,6 @@ with open("sunset.jpg", "wb") as f:
     f.write(response.content)
 ```
 
-## Features
-
-### 🎨 Model Inference
-Run various AI models for text-to-image, music generation, text-to-speech, and more.
-
-### 🔄 PixelFlows
-Execute complex workflows with polling support for long-running tasks.
-
-### 🪝 Webhooks
-Manage webhooks for real-time notifications about your API usage.
-
-### 📁 File Uploads
-Upload images, audio, and video files with support for multiple formats.
-
-### 📊 Usage Analytics
-Track your API usage and generations with detailed filtering options.
-
-### 🔍 Model Discovery
-Browse available models and their capabilities.
-
 ## Core Components
 
 - **SegmindClient**: Main client for API interactions
@@ -70,6 +50,7 @@ Browse available models and their capabilities.
 ## Examples
 
 ### Text to Image
+
 ```python
 response = client.run(
     "seedream-v3-text-to-image",
@@ -79,6 +60,7 @@ response = client.run(
 ```
 
 ### PixelFlows
+
 ```python
 result = client.pixelflows.run(
     workflow_id="your-workflow-id",
@@ -88,11 +70,13 @@ result = client.pixelflows.run(
 ```
 
 ### File Upload
+
 ```python
 result = client.files.upload("path/to/image.png")
 ```
 
 ### Webhooks
+
 ```python
 # Add a webhook
 client.webhooks.add("https://your-endpoint.com", ["PIXELFLOW"])
@@ -127,13 +111,31 @@ except SegmindError as e:
     print(f"Status Code: {e.status}")
 ```
 
+## Development
+
+### Running Tests
+
+The project includes a comprehensive test suite. To run tests locally:
+
+```bash
+# Install development dependencies
+pip install -e ".[test]"
+
+# Run all tests
+python -m pytest tests/ -v
+
+# Run tests with coverage
+python -m pytest tests/ --cov=segmind --cov-report=term-missing
+```
+
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Run tests
-5. Submit a pull request
+4. Run tests: `make test`
+5. Ensure code quality: `pre-commit run --all-files`
+6. Submit a pull request
 
 ## License
 

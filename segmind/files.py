@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, Union
 
 from segmind.resource import Namespace
 
@@ -7,7 +7,7 @@ from segmind.resource import Namespace
 class Files(Namespace):
     """Client for Segmind Files API."""
 
-    def upload(self, file_path: str | Path) -> dict[str, Any]:
+    def upload(self, file_path: Union[str, Path]) -> dict[str, Any]:
         """Upload a media file (image, audio, or video).
 
         Args:

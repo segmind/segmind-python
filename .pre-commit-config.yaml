@@ -18,13 +18,13 @@ repos:
       - id: ruff-check
         args: [--fix]
 
-  - repo: https://github.com/omnilib/ufmt
-    rev: v2.8.0
-    hooks:
-      - id: ufmt
-        additional_dependencies:
-          - black == 22.12.0
-          - usort == 1.0.5
+  # - repo: https://github.com/omnilib/ufmt
+  #   rev: v2.8.0
+  #   hooks:
+  #     - id: ufmt
+  #       additional_dependencies:
+  #         - black == 22.12.0
+  #         - usort == 1.0.5
 
   - repo: https://github.com/jsh9/pydoclint
     rev: 0.5.12

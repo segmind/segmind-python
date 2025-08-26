@@ -1,19 +1,8 @@
 import abc
 from typing import TYPE_CHECKING
 
-try:
-    from pydantic import v1 as pydantic  # type: ignore
-except ImportError:
-    import pydantic  # type: ignore
-
 if TYPE_CHECKING:
     from segmind.client import SegmindClient
-
-
-class Resource(pydantic.BaseModel):  # type: ignore
-    """
-    A base class for representing a single object on the server.
-    """
 
 
 class Namespace(abc.ABC):

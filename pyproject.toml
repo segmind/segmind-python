@@ -29,6 +29,11 @@ dev = [
     "ruff>=0.1.0",
     "pre-commit>=3.0.0",
 ]
+docs = [
+    "sphinx>=6.0.0",
+    "sphinx_rtd_theme>=1.3.0",
+    "sphinx-autodoc-typehints>=1.24.0",
+]
 [project.urls]
 homepage = "https://www.segmind.com/"
 repository = "https://github.com/segmind/segmind"

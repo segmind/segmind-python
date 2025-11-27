@@ -43,7 +43,8 @@ class SegmindClient:
         """
         headers = {
             # "Content-Type": "application/json",
-            "User-Agent": "segmind-python/0.1.0",
+            "User-Agent": "segmind-python-sdk/0.1.0",
+            "X-Initiator": "segmind-python-sdk/0.1.0",
         }
         if self.api_key:
             headers["x-api-key"] = self.api_key

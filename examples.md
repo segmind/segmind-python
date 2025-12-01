@@ -125,28 +125,72 @@ models = client.models.get()
 print(models)
 ```
 
-## Files
+## Files (Segmind Storage)
 
-### Upload Media Files
+Upload files to Segmind Storage and receive persistent URLs that can be reused across multiple model runs and PixelFlow workflows.
+
+### Single File Upload
 ```python
-# Upload image files
+# Upload a single image file
 result = client.files.upload("path/to/image.png")
-result = client.files.upload("path/to/photo.jpg")
-result = client.files.upload("path/to/graphic.webp")
-result = client.files.upload("path/to/icon.svg")
-result = client.files.upload("path/to/photo.heic")
+print(result)
+# {'file_urls': ['https://images.segmind.com/assets/...'], 'message': 'Files uploaded successfully'}
 
-# Upload audio files
-result = client.files.upload("path/to/music.mp3")
-result = client.files.upload("path/to/sound.aiff")
-result = client.files.upload("path/to/audio.wma")
+# Access the uploaded file URL
+file_url = result["file_urls"][0]
+print(file_url)
+# https://images.segmind.com/assets/...
+```
 
-# Upload video files
-result = client.files.upload("path/to/video.mp4")
-result = client.files.upload("path/to/movie.avi")
-result = client.files.upload("path/to/clip.webm")
+### Batch Upload (Multiple Files)
+```python
+# Upload multiple files at once
+result = client.files.upload([
+    "path/to/image1.png",
+    "path/to/image2.jpg",
+    "path/to/image3.webp"
+])
+print(result)
+# {'file_urls': ['https://images.segmind.com/assets/...', ...], 'message': 'Files uploaded successfully'}
 
-# Supported formats:
+# Access individual URLs
+for url in result["file_urls"]:
+    print(url)
+```
+
+### Using Uploaded Files with Models
+```python
+# Upload an image and use it with a model
+upload_result = client.files.upload("input_image.jpg")
+image_url = upload_result["file_urls"][0]
+
+# Use the URL in a model request
+response = client.run(
+    "seededit-v3",
+    image=image_url,
+    prompt="Add a sunset background"
+)
+```
+
+### Using with PixelFlows
+```python
+# Upload files for use in a workflow
+upload_result = client.files.upload(["image1.jpg", "image2.jpg"])
+image_urls = upload_result["file_urls"]
+
+# Use uploaded URLs in PixelFlow
+result = client.pixelflows.run(
+    workflow_id="your-workflow-id",
+    data={
+        "input_image_1": image_urls[0],
+        "input_image_2": image_urls[1]
+    },
+    poll=True
+)
+```
+
+### Supported Formats
+```python
 # Images: png, jpg, jpeg, gif, bmp, webp, svg, ico, tif, tiff, jfif, pjp, apng, svgz, heif, heic, xbm
 # Audio: mp3, aiff, wma, au
 # Video: mp4, avi, mov, mkv, wmv, flv, webm, mpeg, mpg

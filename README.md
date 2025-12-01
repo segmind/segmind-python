@@ -11,15 +11,10 @@ pip install segmind
 ## Quick Start
 
 ```python
-from segmind import SegmindClient
-
-# Initialize the client
-client = SegmindClient(api_key="your_api_key_here")
-# Or use environment variable SEGMIND_API_KEY
-client = SegmindClient()
+import segmind
 
 # Generate an image
-response = client.run(
+response = segmind.run(
     "seedream-v3-text-to-image",
     prompt="A beautiful sunset over mountains",
     aspect_ratio="16:9"
@@ -28,6 +23,11 @@ response = client.run(
 # Save the image
 with open("sunset.jpg", "wb") as f:
     f.write(response.content)
+```
+
+Set your API key as an environment variable:
+```bash
+export SEGMIND_API_KEY="your_api_key_here"
 ```
 
 ## Features
@@ -71,16 +71,23 @@ Browse available models and their capabilities.
 
 ### Text to Image
 ```python
-response = client.run(
+import segmind
+
+response = segmind.run(
     "seedream-v3-text-to-image",
     prompt="A cyberpunk cityscape at night",
     aspect_ratio="16:9"
 )
+
+with open("image.jpg", "wb") as f:
+    f.write(response.content)
 ```
 
 ### PixelFlows
 ```python
-result = client.pixelflows.run(
+import segmind
+
+result = segmind.pixelflows.run(
     workflow_id="your-workflow-id",
     data={"prompt": "Generate an infographic"},
     poll=True
@@ -89,24 +96,28 @@ result = client.pixelflows.run(
 
 ### File Upload (Segmind Storage)
 ```python
+import segmind
+
 # Upload a file to Segmind Storage
-result = client.files.upload("path/to/image.png")
+result = segmind.files.upload("path/to/image.png")
 print(result["file_urls"][0])
 # https://images.segmind.com/assets/...
 
 # Batch upload multiple files
-result = client.files.upload(["image1.png", "image2.jpg"])
+result = segmind.files.upload(["image1.png", "image2.jpg"])
 for url in result["file_urls"]:
     print(url)
 ```
 
 ### Webhooks
 ```python
+import segmind
+
 # Add a webhook
-client.webhooks.add("https://your-endpoint.com", ["PIXELFLOW"])
+segmind.webhooks.add("https://your-endpoint.com", ["PIXELFLOW"])
 
 # Get all webhooks
-webhooks = client.webhooks.get()
+webhooks = segmind.webhooks.get()
 ```
 
 ## Documentation
@@ -124,15 +135,25 @@ For detailed examples and API reference, see [examples.md](examples.md).
 The SDK provides comprehensive error handling with detailed error messages:
 
 ```python
-from segmind import SegmindClient
+import segmind
 from segmind.exceptions import SegmindError
 
 try:
-    client = SegmindClient()
-    response = client.run("invalid-model", prompt="test")
+    response = segmind.run("invalid-model", prompt="test")
 except SegmindError as e:
     print(f"API Error: {e.detail}")
     print(f"Status Code: {e.status}")
+```
+
+## Advanced Usage
+
+For custom configuration (timeout, base URL), use `SegmindClient` directly:
+
+```python
+from segmind import SegmindClient
+
+client = SegmindClient(api_key="your_key", timeout=120.0)
+response = client.run("model-name", prompt="...")
 ```
 
 ## Contributing

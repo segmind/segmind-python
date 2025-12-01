@@ -21,9 +21,9 @@ Usage:
 
 from typing import Optional
 
-__version__ = "0.1.0"
-
 from segmind.client import SegmindClient
+
+__version__ = "0.1.0"
 
 # Default client (lazily initialized)
 _default_client: Optional[SegmindClient] = None

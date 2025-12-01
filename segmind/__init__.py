@@ -19,12 +19,14 @@ Usage:
     result = segmind.pixelflows.run(workflow_id="...", data={...})
 """
 
+from typing import Optional
+
 __version__ = "0.1.0"
 
 from segmind.client import SegmindClient
 
 # Default client (lazily initialized)
-_default_client: SegmindClient | None = None
+_default_client: Optional[SegmindClient] = None
 
 
 def _get_client() -> SegmindClient:

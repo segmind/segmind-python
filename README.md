@@ -87,9 +87,17 @@ result = client.pixelflows.run(
 )
 ```
 
-### File Upload
+### File Upload (Segmind Storage)
 ```python
+# Upload a file to Segmind Storage
 result = client.files.upload("path/to/image.png")
+print(result["file_urls"][0])
+# https://images.segmind.com/assets/...
+
+# Batch upload multiple files
+result = client.files.upload(["image1.png", "image2.jpg"])
+for url in result["file_urls"]:
+    print(url)
 ```
 
 ### Webhooks

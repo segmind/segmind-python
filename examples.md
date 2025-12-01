@@ -134,12 +134,12 @@ Upload files to Segmind Storage and receive persistent URLs that can be reused a
 # Upload a single image file
 result = client.files.upload("path/to/image.png")
 print(result)
-# {'urls': ['https://storage.segmind.com/assets/...']}
+# {'file_urls': ['https://images.segmind.com/assets/...'], 'message': 'Files uploaded successfully'}
 
 # Access the uploaded file URL
-file_url = result["urls"][0]
+file_url = result["file_urls"][0]
 print(file_url)
-# https://storage.segmind.com/assets/...
+# https://images.segmind.com/assets/...
 ```
 
 ### Batch Upload (Multiple Files)
@@ -151,10 +151,10 @@ result = client.files.upload([
     "path/to/image3.webp"
 ])
 print(result)
-# {'urls': ['https://storage.segmind.com/assets/...', 'https://storage.segmind.com/assets/...', ...]}
+# {'file_urls': ['https://images.segmind.com/assets/...', ...], 'message': 'Files uploaded successfully'}
 
 # Access individual URLs
-for url in result["urls"]:
+for url in result["file_urls"]:
     print(url)
 ```
 
@@ -162,7 +162,7 @@ for url in result["urls"]:
 ```python
 # Upload an image and use it with a model
 upload_result = client.files.upload("input_image.jpg")
-image_url = upload_result["urls"][0]
+image_url = upload_result["file_urls"][0]
 
 # Use the URL in a model request
 response = client.run(
@@ -176,7 +176,7 @@ response = client.run(
 ```python
 # Upload files for use in a workflow
 upload_result = client.files.upload(["image1.jpg", "image2.jpg"])
-image_urls = upload_result["urls"]
+image_urls = upload_result["file_urls"]
 
 # Use uploaded URLs in PixelFlow
 result = client.pixelflows.run(

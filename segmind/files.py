@@ -26,7 +26,8 @@ class Files(Namespace):
 
         Returns:
             Dictionary containing:
-                - urls: List of persistent storage URLs for the uploaded files
+                - file_urls: List of persistent storage URLs for the uploaded files
+                - message: Success message
 
         Raises:
             FileNotFoundError: If any file doesn't exist
@@ -36,13 +37,13 @@ class Files(Namespace):
             >>> client = SegmindClient(api_key="...")
             >>> # Single file upload
             >>> result = client.files.upload("image.jpg")
-            >>> print(result["urls"][0])
-            https://storage.segmind.com/assets/...
+            >>> print(result["file_urls"][0])
+            https://images.segmind.com/assets/...
 
             >>> # Batch upload
             >>> result = client.files.upload(["image1.jpg", "image2.png"])
-            >>> print(result["urls"])
-            ['https://storage.segmind.com/assets/...', ...]
+            >>> print(result["file_urls"])
+            ['https://images.segmind.com/assets/...', ...]
         """
         # Normalize to list
         if isinstance(file_paths, (str, Path)):

@@ -25,34 +25,6 @@ with open("sunset.jpg", "wb") as f:
     f.write(response.content)
 ```
 
-Set your API key as an environment variable:
-```bash
-export SEGMIND_API_KEY="your_api_key_here"
-```
-
-## Features
-
-### 🎨 Model Inference
-Run various AI models for text-to-image, music generation, text-to-speech, and more.
-
-### 🔄 PixelFlows
-Execute complex workflows with polling support for long-running tasks.
-
-### 🪝 Webhooks
-Manage webhooks for real-time notifications about your API usage.
-
-### 📁 File Uploads
-Upload images, audio, and video files with support for multiple formats.
-
-### 📊 Usage Analytics
-Track your API usage and generations with detailed filtering options.
-
-### 🔍 Model Discovery
-Browse available models and their capabilities.
-
-### 🧪 Finetuning (Flux)
-Initiate and manage Flux fine-tuning jobs and upload datasets via presigned URLs.
-
 ## Core Components
 
 - **SegmindClient**: Main client for API interactions
@@ -73,6 +45,7 @@ Initiate and manage Flux fine-tuning jobs and upload datasets via presigned URLs
 ## Examples
 
 ### Text to Image
+
 ```python
 import segmind
 
@@ -87,6 +60,7 @@ with open("image.jpg", "wb") as f:
 ```
 
 ### PixelFlows
+
 ```python
 import segmind
 
@@ -97,7 +71,8 @@ result = segmind.pixelflows.run(
 )
 ```
 
-### File Upload (Segmind Storage)
+### File Upload
+
 ```python
 import segmind
 
@@ -113,6 +88,7 @@ for url in result["file_urls"]:
 ```
 
 ### Webhooks
+
 ```python
 import segmind
 
@@ -192,15 +168,21 @@ except SegmindError as e:
     print(f"Status Code: {e.status}")
 ```
 
-## Advanced Usage
+## Development
 
-For custom configuration (timeout, base URL), use `SegmindClient` directly:
+### Running Tests
 
-```python
-from segmind import SegmindClient
+The project includes a comprehensive test suite. To run tests locally:
 
-client = SegmindClient(api_key="your_key", timeout=120.0)
-response = client.run("model-name", prompt="...")
+```bash
+# Install development dependencies
+pip install -e ".[test]"
+
+# Run all tests
+python -m pytest tests/ -v
+
+# Run tests with coverage
+python -m pytest tests/ --cov=segmind --cov-report=term-missing
 ```
 
 ## Contributing
@@ -208,8 +190,9 @@ response = client.run("model-name", prompt="...")
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Run tests
-5. Submit a pull request
+4. Run tests: `make test`
+5. Ensure code quality: `pre-commit run --all-files`
+6. Submit a pull request
 
 ## License
 

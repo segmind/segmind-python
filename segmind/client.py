@@ -6,6 +6,7 @@ import httpx
 from segmind.accounts import Accounts
 from segmind.exceptions import raise_for_status
 from segmind.files import Files
+from segmind.finetune import Finetune
 from segmind.generations import Generations
 from segmind.models import Models
 from segmind.pixelflows import PixelFlows
@@ -142,3 +143,10 @@ class SegmindClient:
         Namespace for operations related to Accounts.
         """
         return Accounts(client=self)
+
+    @property
+    def finetune(self) -> Finetune:
+        """
+        Namespace for operations related to Finetuning APIs.
+        """
+        return Finetune(client=self)

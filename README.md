@@ -50,6 +50,9 @@ Track your API usage and generations with detailed filtering options.
 ### 🔍 Model Discovery
 Browse available models and their capabilities.
 
+### 🧪 Finetuning (Flux)
+Initiate and manage Flux fine-tuning jobs and upload datasets via presigned URLs.
+
 ## Core Components
 
 - **SegmindClient**: Main client for API interactions
@@ -120,9 +123,53 @@ segmind.webhooks.add("https://your-endpoint.com", ["PIXELFLOW"])
 webhooks = segmind.webhooks.get()
 ```
 
+### Finetuning
+```python
+# Get a presigned URL to upload your dataset (.zip)
+upload = client.finetune.upload_presigned_url(name="my-dataset.zip")
+# upload["presigned_url"] can be used with a PUT request to S3
+
+# Submit a fine-tune request
+job = client.finetune.submit(
+    name="flux-job-1",
+    data_source_path=upload["s3_url"],  # or any public zip URL
+    instance_prompt="1MAN, running in brown suit",
+    trigger_word="1MAN",
+    base_model="FLUX",
+    train_type="LORA",
+    machine_type="NVIDIA_A100_40GB",
+    theme="FLUX",
+    segmind_public=False,
+    advance_parameters={
+        "steps": 1000,
+        "batch_size": 2,
+        "learning_rate": 4e-4,
+    },
+)
+
+# Get details
+details = client.finetune.details(request_id=job["finetune_id"])
+
+# List all
+all_jobs = client.finetune.list()
+
+# Update access (public/private)
+client.finetune.access_update(request_id=job["finetune_id"], segmind_public=True)
+
+# Download model file (returns a temporary URL string)
+download_url = client.finetune.file_download(cloud_storage_url=details["finetune"]["cloud_storage_url"])
+```
+
 ## Documentation
 
 For detailed examples and API reference, see [examples.md](examples.md).
+
+Public API Playground (Swagger UI): open `docs/swagger.html` after building docs, or serve `docs/` statically. It loads the spec at `docs/_static/openapi/segmind-sdk.yaml` and supports the Authorize flow with `x-api-key`.
+
+Run this to serve the documentation.
+```python
+python3 -m http.server 8000
+```
 
 ## Requirements
 

@@ -1,0 +1,445 @@
+openapi: 3.0.3
+info:
+  title: Segmind SDK Public API
+  version: "1.0.0"
+  description: |
+    Public API playground for Segmind endpoints used by the Python SDK.
+    Use the Authorize button to enter your `x-api-key`, then Try it out.
+
+servers:
+  - url: https://api.segmind.com
+    description: Primary API
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+  schemas:
+    FinetuneSubmit:
+      type: object
+      required: [name, data_source_path, instance_prompt, trigger_word, base_model, train_type, machine_type]
+      properties:
+        name:
+          type: string
+        data_source_path:
+          type: string
+          description: Public ZIP URL or Segmind S3 URL returned by presigned endpoint
+        instance_prompt:
+          type: string
+        trigger_word:
+          type: string
+        base_model:
+          type: string
+          enum: [FLUX]
+        train_type:
+          type: string
+          enum: [LORA]
+        machine_type:
+          type: string
+          enum: [NVIDIA_A100_40GB, NVIDIA_H100, NVIDIA_L40S]
+        theme:
+          type: string
+        segmind_public:
+          type: boolean
+          default: false
+        advance_parameters:
+          type: object
+          additionalProperties: true
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /v1/{slug}:
+    post:
+      summary: Run inference by slug
+      description: Proxy for model inference used by SegmindClient.run
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Inference response
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /workflows/{workflow_id}:
+    post:
+      summary: Run PixelFlows workflow
+      parameters:
+        - in: path
+          name: workflow_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Workflow submitted
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /workflows/request/{poll_id}:
+    get:
+      summary: Get workflow request status
+      parameters:
+        - in: path
+          name: poll_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Workflow status
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /finetune/request/submit:
+    post:
+      summary: Submit finetune job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinetuneSubmit'
+      responses:
+        '200':
+          description: Job created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  finetune_id:
+                    type: string
+                  name:
+                    type: string
+
+  /finetune/request/details:
+    get:
+      summary: Get finetune request details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [request_id]
+              properties:
+                request_id:
+                  type: string
+      responses:
+        '200':
+          description: Details response
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /finetune/request/list:
+    get:
+      summary: List finetune requests
+      responses:
+        '200':
+          description: List response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /finetune/request/upload/pre-signed-url:
+    get:
+      summary: Get presigned upload URL for dataset zip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  example: dataset.zip
+      responses:
+        '200':
+          description: Presigned URL response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  presigned_url:
+                    type: string
+                  s3_url:
+                    type: string
+
+  /finetune/request/access-update:
+    put:
+      summary: Update finetuned model access
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [request_id, segmind_public]
+              properties:
+                request_id:
+                  type: string
+                segmind_public:
+                  type: string
+                  enum: ["True", "False"]
+      responses:
+        '200':
+          description: Access updated
+
+  /finetune/request/file/download:
+    get:
+      summary: Get presigned download URL for model file
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [cloud_storage_url]
+              properties:
+                cloud_storage_url:
+                  type: string
+      responses:
+        '200':
+          description: URL string
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /inference-model-information/list:
+    get:
+      summary: List models
+      servers:
+        - url: https://api.spotprod.segmind.com
+      responses:
+        '200':
+          description: Models list
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /inference-request/generations:
+    get:
+      summary: Get generations
+      servers:
+        - url: https://api.spotprod.segmind.com
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: model_name
+          schema:
+            type: string
+        - in: query
+          name: start_date
+          schema:
+            type: string
+        - in: query
+          name: end_date
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Generations list
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /inference-request/recent-generations:
+    get:
+      summary: Recent generations by model
+      servers:
+        - url: https://api.spotprod.segmind.com
+      parameters:
+        - in: query
+          name: model_name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Recent generations
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /inference-request/input-upload:
+    post:
+      summary: Upload a media file
+      servers:
+        - url: https://api.spotprod.segmind.com
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Upload success
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /webhook/get:
+    get:
+      summary: Get all webhooks
+      servers:
+        - url: https://api.spotprod.segmind.com
+      responses:
+        '200':
+          description: Webhooks
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /webhook/add:
+    post:
+      summary: Add webhook
+      servers:
+        - url: https://api.spotprod.segmind.com
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [webhook_url, event]
+              properties:
+                webhook_url:
+                  type: string
+                event:
+                  type: object
+                  properties:
+                    types:
+                      type: array
+                      items:
+                        type: string
+      responses:
+        '200':
+          description: Added
+
+  /webhook/update:
+    post:
+      summary: Update webhook
+      servers:
+        - url: https://api.spotprod.segmind.com
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [webhook_id, webhook_url, event]
+              properties:
+                webhook_id:
+                  type: string
+                webhook_url:
+                  type: string
+                event:
+                  type: object
+                  properties:
+                    types:
+                      type: array
+                      items:
+                        type: string
+      responses:
+        '200':
+          description: Updated
+
+  /webhook/inactive:
+    get:
+      summary: Delete webhook (inactive)
+      servers:
+        - url: https://api.spotprod.segmind.com
+      parameters:
+        - in: query
+          name: webhook_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+
+  /webhook/dispatch-logs:
+    get:
+      summary: Webhook logs
+      servers:
+        - url: https://api.spotprod.segmind.com
+      parameters:
+        - in: query
+          name: webhook_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Logs
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/auth/authenticate:
+    get:
+      summary: Account info
+      servers:
+        - url: https://cloud.segmind.com
+      responses:
+        '200':
+          description: Account
+          content:
+            application/json:
+              schema:
+                type: object

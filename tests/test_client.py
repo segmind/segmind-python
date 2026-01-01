@@ -35,7 +35,9 @@ class TestSegmindClient:
         http_client = client._build_client()
 
         assert http_client.headers["x-api-key"] == mock_api_key
-        assert http_client.headers["User-Agent"] == "segmind-python/0.1.0"
+        assert http_client.headers["User-Agent"] == "segmind-python-sdk/0.1.0"
+        assert http_client.headers["X-Initiator"] == "segmind-python-sdk/0.1.0"
+
 
     def test_http_client_headers_without_api_key(self):
         """Test HTTP client headers when no API key is provided."""
@@ -43,7 +45,9 @@ class TestSegmindClient:
         http_client = client._build_client()
 
         assert "x-api-key" not in http_client.headers
-        assert http_client.headers["User-Agent"] == "segmind-python/0.1.0"
+        assert http_client.headers["User-Agent"] == "segmind-python-sdk/0.1.0"
+        assert http_client.headers["X-Initiator"] == "segmind-python-sdk/0.1.0"
+
 
     def test_http_client_timeout_configuration(self, mock_api_key):
         """Test HTTP client timeout configuration."""

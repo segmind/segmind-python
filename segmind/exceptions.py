@@ -4,15 +4,15 @@ import httpx
 
 
 def raise_for_status(response: httpx.Response) -> None:
-    """Raise a SegmindError if the response status is not 200.
+    """Raise a SegmindError if the response status is not successful (2xx or 3xx).
 
     Args:
         response: HTTP response to check
 
     Raises:
-        SegmindError: If response status code is not 200
+        SegmindError: If response status code is not in the 2xx-3xx range
     """
-    if response.status_code != 200:
+    if not (200 <= response.status_code < 400):
         raise SegmindError.from_response(response)
 
 
@@ -49,6 +49,9 @@ class SegmindError(Exception):
         """
         try:
             data = response.json()
+            # Handle non-dict JSON (e.g., lists)
+            if not isinstance(data, dict):
+                data = {}
         except ValueError:
             data = {}
 

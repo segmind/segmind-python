@@ -86,6 +86,7 @@ class TestCompleteWorkflows:
             
             # Mock file upload
             upload_response = mock.MagicMock()
+            upload_response.status_code = 200  # Set status code for raise_for_status
             upload_response.json.return_value = {
                 "file_id": "file_123",
                 "url": "https://cdn.segmind.com/uploads/file_123.png",
@@ -134,6 +135,7 @@ class TestCompleteWorkflows:
         with mock.patch.object(client.pixelflows, '_client') as mock_client:
             # Mock initial workflow submission
             initial_response = mock.MagicMock()
+            initial_response.status_code = 200  # Set status code for raise_for_status
             initial_response.json.return_value = {
                 "request_id": "req_789",
                 "status": "QUEUED",
@@ -157,6 +159,7 @@ class TestCompleteWorkflows:
             mock_poll_responses = []
             for poll_data in poll_responses:
                 mock_resp = mock.MagicMock()
+                mock_resp.status_code = 200  # Set status code for raise_for_status
                 mock_resp.json.return_value = poll_data
                 mock_poll_responses.append(mock_resp)
 
@@ -185,6 +188,7 @@ class TestCompleteWorkflows:
         with mock.patch.object(client.webhooks, '_client') as mock_client:
             # Mock webhook creation
             create_response = mock.MagicMock()
+            create_response.status_code = 200  # Set status code for raise_for_status
             create_response.json.return_value = {
                 "webhook_id": "wh_123",
                 "status": "active",
@@ -194,6 +198,7 @@ class TestCompleteWorkflows:
 
             # Mock webhook listing
             list_response = mock.MagicMock()
+            list_response.status_code = 200  # Set status code for raise_for_status
             list_response.json.return_value = {
                 "webhooks": [
                     {
@@ -207,6 +212,7 @@ class TestCompleteWorkflows:
 
             # Mock webhook update
             update_response = mock.MagicMock()
+            update_response.status_code = 200  # Set status code for raise_for_status
             update_response.json.return_value = {
                 "webhook_id": "wh_123",
                 "status": "active",
@@ -216,6 +222,7 @@ class TestCompleteWorkflows:
 
             # Mock webhook logs
             logs_response = mock.MagicMock()
+            logs_response.status_code = 200  # Set status code for raise_for_status
             logs_response.json.return_value = {
                 "webhook_id": "wh_123",
                 "logs": [
@@ -268,6 +275,7 @@ class TestCompleteWorkflows:
             
             # Mock account information
             account_response = mock.MagicMock()
+            account_response.status_code = 200  # Set status code for raise_for_status
             account_response.json.return_value = {
                 "user_id": "user_123",
                 "subscription": {"plan": "pro", "status": "active"},
@@ -280,6 +288,7 @@ class TestCompleteWorkflows:
 
             # Mock generations history
             generations_response = mock.MagicMock()
+            generations_response.status_code = 200  # Set status code for raise_for_status
             generations_response.json.return_value = {
                 "generations": [
                     {
@@ -391,6 +400,7 @@ class TestCompleteWorkflows:
         with mock.patch.object(client.models, '_client') as mock_client:
             # Mock models list response
             models_response = mock.MagicMock()
+            models_response.status_code = 200  # Set status code for raise_for_status
             models_response.json.return_value = {
                 "models": [
                     {
@@ -483,6 +493,7 @@ class TestCompleteWorkflows:
             
             # Mock file upload
             upload_response = mock.MagicMock()
+            upload_response.status_code = 200  # Set status code for raise_for_status
             upload_response.json.return_value = {
                 "file_id": "temp_file_123",
                 "expires_at": "2024-01-16T00:00:00Z"
@@ -490,6 +501,7 @@ class TestCompleteWorkflows:
 
             # Mock webhook deletion
             delete_response = mock.MagicMock()
+            delete_response.status_code = 200  # Set status code for raise_for_status
             delete_response.json.return_value = {
                 "webhook_id": "temp_wh_456",
                 "status": "inactive"

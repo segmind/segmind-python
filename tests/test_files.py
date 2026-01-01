@@ -82,17 +82,24 @@ class TestFiles:
         assert result["status"] == "success"
         assert result["file_id"] == "file_123456"
         assert result["content_type"] == "image/png"
-        
-        # Verify the request was made correctly
+
+        # Verify the request was made correctly with new API
         mock_client._request.assert_called_once_with(
             "POST",
-            "https://api.spotprod.segmind.com/inference-request/input-upload",
-            files=mock.ANY
+            "https://workflows-api.segmind.com/upload-asset",
+            json=mock.ANY,
+            headers={
+                "accept": "application/json, text/plain, */*",
+                "content-type": "application/json"
+            }
         )
-        
-        # Check that files parameter was passed
+
+        # Check that json parameter with data_urls was passed
         call_args = mock_client._request.call_args
-        assert "files" in call_args[1]
+        assert "json" in call_args[1]
+        assert "data_urls" in call_args[1]["json"]
+        # Check it's a base64-encoded data URL
+        assert call_args[1]["json"]["data_urls"][0].startswith("data:image/png;base64,")
 
     def test_upload_audio_success(self, files, mock_client, temp_audio_file):
         """Test successful audio file upload."""
@@ -335,12 +342,13 @@ class TestFiles:
             result = files.upload(temp_path)
 
             assert result["status"] == "success"
-            
-            # Verify the filename was passed correctly in the files parameter
+
+            # Verify the request was made with new API (base64 encoding)
             call_args = mock_client._request.call_args
-            files_param = call_args[1]["files"]
-            filename = files_param["file"][0]  # (filename, file_obj, content_type)
-            assert filename == temp_path.name
+            assert "json" in call_args[1]
+            assert "data_urls" in call_args[1]["json"]
+            # Should still process files with special characters in name
+            assert len(call_args[1]["json"]["data_urls"]) == 1
         finally:
             temp_path.unlink(missing_ok=True)
 
@@ -459,10 +467,15 @@ class TestFiles:
 
         files.upload(temp_image_file)
 
+        # Verify new API endpoint is used
         mock_client._request.assert_called_once_with(
             "POST",
-            "https://api.spotprod.segmind.com/inference-request/input-upload",
-            files=mock.ANY
+            "https://workflows-api.segmind.com/upload-asset",
+            json=mock.ANY,
+            headers={
+                "accept": "application/json, text/plain, */*",
+                "content-type": "application/json"
+            }
         )
 
     @pytest.mark.parametrize("file_size", [1, 100, 1000, 10000])

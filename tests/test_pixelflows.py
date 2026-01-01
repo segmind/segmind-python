@@ -5,8 +5,6 @@ import time
 from unittest import mock
 
 import pytest
-import respx
-from httpx import Response
 
 from segmind.pixelflows import PixelFlows
 
@@ -511,7 +509,7 @@ class TestPixelFlows:
         mock_client._request.return_value = response
 
         pixelflows.workflows_base = "https://api.segmind.com/workflows"
-        
+
         with pytest.raises(json.JSONDecodeError):
             pixelflows.poll(poll_id="req-malformed")
 
@@ -523,7 +521,7 @@ class TestPixelFlows:
     def test_poll_timing_parameters(self, pixelflows, mock_client, poll_interval, max_wait_time):
         """Test polling with different timing parameters."""
         start_time = time.time()
-        
+
         # Mock response that never completes
         response = mock.MagicMock()
         response.json.return_value = {"status": "PROCESSING"}
@@ -536,7 +534,7 @@ class TestPixelFlows:
         )
 
         elapsed_time = time.time() - start_time
-        
+
         assert result["status"] == "TIMEOUT"
         assert elapsed_time >= max_wait_time
         assert elapsed_time < max_wait_time + poll_interval + 0.5  # Some buffer for execution

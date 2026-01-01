@@ -17,11 +17,11 @@ def temp_image_png() -> Generator[Path, None, None]:
         b'\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01'
         b'\r\n-\xdb\x00\x00\x00\x00IEND\xaeB`\x82'
     )
-    
+
     with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as f:
         f.write(png_data)
         temp_path = Path(f.name)
-    
+
     yield temp_path
     temp_path.unlink(missing_ok=True)
 
@@ -34,7 +34,7 @@ def temp_image_jpg() -> Generator[Path, None, None]:
         b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H'
         b'\x00\x00\xff\xdb\x00C\x00\x08\x06\x06\x07\x06\x05\x08'
         b'\x07\x07\x07\t\t\x08\n\x0c\x14\r\x0c\x0b\x0b\x0c\x19'
-        b'\x12\x13\x0f\x14\x1d\x1a\x1f\x1e\x1d\x1a\x1c\x1c $.\' 
+        b'\x12\x13\x0f\x14\x1d\x1a\x1f\x1e\x1d\x1a\x1c\x1c $.\\'
         b'",#\x1c\x1c(7),01444\x1f\'9=82<.342\xff\xc0\x00\x11'
         b'\x08\x00\x01\x00\x01\x01\x01\x11\x00\x02\x11\x01\x03'
         b'\x11\x01\xff\xc4\x00\x14\x00\x01\x00\x00\x00\x00\x00'
@@ -43,11 +43,11 @@ def temp_image_jpg() -> Generator[Path, None, None]:
         b'\x00\x00\x00\x00\x00\x00\x00\xff\xda\x00\x08\x01\x01'
         b'\x00\x00?\x00\xaa\xff\xd9'
     )
-    
+
     with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as f:
         f.write(jpeg_data)
         temp_path = Path(f.name)
-    
+
     yield temp_path
     temp_path.unlink(missing_ok=True)
 
@@ -62,11 +62,11 @@ def temp_image_gif() -> Generator[Path, None, None]:
         b'\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02'
         b'\x04\x01\x00;'
     )
-    
+
     with tempfile.NamedTemporaryFile(suffix='.gif', delete=False) as f:
         f.write(gif_data)
         temp_path = Path(f.name)
-    
+
     yield temp_path
     temp_path.unlink(missing_ok=True)
 
@@ -80,11 +80,11 @@ def temp_audio_mp3() -> Generator[Path, None, None]:
         b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
         b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
     )
-    
+
     with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as f:
         f.write(mp3_data)
         temp_path = Path(f.name)
-    
+
     yield temp_path
     temp_path.unlink(missing_ok=True)
 
@@ -98,11 +98,11 @@ def temp_audio_wav() -> Generator[Path, None, None]:
         b'\x01\x00D\xac\x00\x00\x88X\x01\x00\x02\x00\x10\x00'
         b'data\x00\x00\x00\x00'
     )
-    
+
     with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
         f.write(wav_data)
         temp_path = Path(f.name)
-    
+
     yield temp_path
     temp_path.unlink(missing_ok=True)
 
@@ -115,11 +115,11 @@ def temp_video_mp4() -> Generator[Path, None, None]:
         b'\x00\x00\x00\x20ftypmp41\x00\x00\x00\x00mp41isom'
         b'\x00\x00\x00\x08free\x00\x00\x00\x28mdat'
     )
-    
+
     with tempfile.NamedTemporaryFile(suffix='.mp4', delete=False) as f:
         f.write(mp4_data)
         temp_path = Path(f.name)
-    
+
     yield temp_path
     temp_path.unlink(missing_ok=True)
 
@@ -136,11 +136,11 @@ def temp_video_avi() -> Generator[Path, None, None]:
         b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
         b'\x00\x00\x00\x00\x00\x00\x00\x00'
     )
-    
+
     with tempfile.NamedTemporaryFile(suffix='.avi', delete=False) as f:
         f.write(avi_data)
         temp_path = Path(f.name)
-    
+
     yield temp_path
     temp_path.unlink(missing_ok=True)
 
@@ -151,7 +151,7 @@ def temp_unsupported_file() -> Generator[Path, None, None]:
     with tempfile.NamedTemporaryFile(suffix='.txt', delete=False) as f:
         f.write(b'This is a text file, not supported for upload')
         temp_path = Path(f.name)
-    
+
     yield temp_path
     temp_path.unlink(missing_ok=True)
 
@@ -164,20 +164,20 @@ def temp_large_image() -> Generator[Path, None, None]:
         b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x01\x00'
         b'\x00\x00\x01\x00\x08\x06\x00\x00\x00\x5c\x72\xa8\x66'
     )
-    
+
     # Create image data chunk
     image_data = b'\x00' * 100000  # 100KB of zeros
     idat_chunk = b'IDAT' + len(image_data).to_bytes(4, 'big') + image_data
-    
+
     # PNG end chunk
     png_end = b'\x00\x00\x00\x00IEND\xaeB`\x82'
-    
+
     full_png = png_header + idat_chunk + png_end
-    
+
     with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as f:
         f.write(full_png)
         temp_path = Path(f.name)
-    
+
     yield temp_path
     temp_path.unlink(missing_ok=True)
 
@@ -188,7 +188,7 @@ def temp_empty_file() -> Generator[Path, None, None]:
     with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as f:
         # Write nothing to create an empty file
         temp_path = Path(f.name)
-    
+
     yield temp_path
     temp_path.unlink(missing_ok=True)
 
@@ -203,7 +203,7 @@ def temp_file_with_special_chars() -> Generator[Path, None, None]:
         b'\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01'
         b'\r\n-\xdb\x00\x00\x00\x00IEND\xaeB`\x82'
     )
-    
+
     # Create file with special characters (spaces, symbols)
     with tempfile.NamedTemporaryFile(
         prefix='test file with spaces & symbols!',
@@ -212,7 +212,7 @@ def temp_file_with_special_chars() -> Generator[Path, None, None]:
     ) as f:
         f.write(png_data)
         temp_path = Path(f.name)
-    
+
     yield temp_path
     temp_path.unlink(missing_ok=True)
 
@@ -271,7 +271,7 @@ def unsupported_file_formats():
 def create_temp_file():
     """Factory fixture for creating temporary files with custom content."""
     created_files = []
-    
+
     def _create_file(content: bytes, suffix: str = '.tmp', prefix: str = 'test_') -> Path:
         with tempfile.NamedTemporaryFile(
             suffix=suffix,
@@ -282,9 +282,9 @@ def create_temp_file():
             temp_path = Path(f.name)
             created_files.append(temp_path)
             return temp_path
-    
+
     yield _create_file
-    
+
     # Cleanup all created files
     for file_path in created_files:
         file_path.unlink(missing_ok=True)
@@ -304,7 +304,7 @@ def binary_file_samples():
             b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H'
             b'\x00\x00\xff\xdb\x00C\x00\x08\x06\x06\x07\x06\x05\x08'
             b'\x07\x07\x07\t\t\x08\n\x0c\x14\r\x0c\x0b\x0b\x0c\x19'
-            b'\x12\x13\x0f\x14\x1d\x1a\x1f\x1e\x1d\x1a\x1c\x1c $.\' 
+            b'\x12\x13\x0f\x14\x1d\x1a\x1f\x1e\x1d\x1a\x1c\x1c $.\\'
             b'",#\x1c\x1c(7),01444\x1f\'9=82<.342\xff\xc0\x00\x11'
             b'\x08\x00\x01\x00\x01\x01\x01\x11\x00\x02\x11\x01\x03'
             b'\x11\x01\xff\xc4\x00\x14\x00\x01\x00\x00\x00\x00\x00'
@@ -342,11 +342,11 @@ def file_size_variants(create_temp_file):
             'large': base_content + b'\x00' * 102400,  # +100KB
             'xlarge': base_content + b'\x00' * 1048576,  # +1MB
         }
-        
+
         files = {}
         for size_name, content in sizes.items():
             files[size_name] = create_temp_file(content, extension, f'test_{size_name}_')
-        
+
         return files
-    
+
     return _create_sized_files

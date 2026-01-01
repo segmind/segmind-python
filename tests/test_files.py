@@ -4,8 +4,8 @@ import tempfile
 from pathlib import Path
 from unittest import mock
 
-import pytest
 import httpx
+import pytest
 
 from segmind.files import Files
 
@@ -157,7 +157,7 @@ class TestFiles:
     def test_upload_file_not_found(self, files):
         """Test upload with non-existent file."""
         non_existent_path = Path("/path/that/does/not/exist.png")
-        
+
         with pytest.raises(FileNotFoundError, match="File not found"):
             files.upload(non_existent_path)
 
@@ -165,7 +165,7 @@ class TestFiles:
         """Test upload with directory path instead of file."""
         with tempfile.TemporaryDirectory() as temp_dir:
             dir_path = Path(temp_dir)
-            
+
             with pytest.raises(ValueError, match="Path is not a file"):
                 files.upload(dir_path)
 
@@ -174,7 +174,7 @@ class TestFiles:
         with tempfile.NamedTemporaryFile(suffix='.txt', delete=False) as f:
             f.write(b"This is a text file")
             temp_path = Path(f.name)
-        
+
         try:
             with pytest.raises(ValueError, match="File is not a supported media format"):
                 files.upload(temp_path)
@@ -191,7 +191,7 @@ class TestFiles:
     def test_upload_api_error(self, files, mock_client, temp_image_file):
         """Test upload with API error response."""
         mock_client._request.side_effect = httpx.HTTPStatusError(
-            "Upload failed", 
+            "Upload failed",
             request=mock.MagicMock(),
             response=mock.MagicMock(status_code=413)  # Payload too large
         )
@@ -274,7 +274,7 @@ class TestFiles:
     def test_get_content_type_case_insensitive(self, files):
         """Test that file extension matching is case insensitive."""
         extensions_to_test = [".PNG", ".JPG", ".MP4", ".Mp3", ".WeBp"]
-        
+
         for ext in extensions_to_test:
             with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as f:
                 f.write(b"test content")
@@ -290,7 +290,7 @@ class TestFiles:
     def test_get_content_type_nonexistent_file(self, files):
         """Test _get_content_type with non-existent file."""
         non_existent_path = Path("/path/that/does/not/exist.png")
-        
+
         with pytest.raises(FileNotFoundError, match="File not found"):
             files._get_content_type(non_existent_path)
 
@@ -298,7 +298,7 @@ class TestFiles:
         """Test _get_content_type with directory path."""
         with tempfile.TemporaryDirectory() as temp_dir:
             dir_path = Path(temp_dir)
-            
+
             with pytest.raises(ValueError, match="Path is not a file"):
                 files._get_content_type(dir_path)
 
@@ -453,9 +453,11 @@ class TestFiles:
 
         try:
             # Mock permission error during file opening
-            with mock.patch('builtins.open', side_effect=PermissionError("Permission denied")):
-                with pytest.raises(PermissionError):
-                    files.upload(temp_path)
+            with (
+                mock.patch('builtins.open', side_effect=PermissionError("Permission denied")),
+                pytest.raises(PermissionError)
+            ):
+                files.upload(temp_path)
         finally:
             temp_path.unlink(missing_ok=True)
 

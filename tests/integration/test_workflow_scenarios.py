@@ -4,11 +4,10 @@ import tempfile
 from pathlib import Path
 from unittest import mock
 
-import pytest
 import httpx
+import pytest
 
 from segmind.client import SegmindClient
-from segmind.exceptions import SegmindError
 
 
 class TestCompleteWorkflows:
@@ -29,11 +28,11 @@ class TestCompleteWorkflows:
             b'\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01'
             b'\r\n-\xdb\x00\x00\x00\x00IEND\xaeB`\x82'
         )
-        
+
         with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as f:
             f.write(png_data)
             temp_path = Path(f.name)
-        
+
         yield temp_path
         temp_path.unlink(missing_ok=True)
 
@@ -84,7 +83,7 @@ class TestCompleteWorkflows:
         """Test workflow involving file upload and subsequent processing."""
         with mock.patch.object(client.files, '_client') as mock_files_client, \
              mock.patch.object(client, '_client') as mock_main_client:
-            
+
             # Mock file upload
             upload_response = mock.MagicMock()
             upload_response.status_code = 200  # Set status code for raise_for_status
@@ -166,7 +165,7 @@ class TestCompleteWorkflows:
                 mock_poll_responses.append(mock_resp)
 
             # Set up the mock call sequence
-            mock_client._request.side_effect = [initial_response] + mock_poll_responses
+            mock_client._request.side_effect = [initial_response, *mock_poll_responses]
 
             # Run the workflow with polling
             result = client.pixelflows.run(
@@ -276,7 +275,7 @@ class TestCompleteWorkflows:
         """Test account information and usage monitoring workflow."""
         with mock.patch.object(client.accounts, '_client') as mock_accounts_client, \
              mock.patch.object(client.generations, '_client') as mock_generations_client:
-            
+
             # Mock account information
             account_response = mock.MagicMock()
             account_response.status_code = 200  # Set status code for raise_for_status
@@ -497,7 +496,7 @@ class TestCompleteWorkflows:
         """Test resource cleanup and management workflow."""
         with mock.patch.object(client.files, '_client') as mock_files_client, \
              mock.patch.object(client.webhooks, '_client') as mock_webhooks_client:
-            
+
             # Mock file upload
             upload_response = mock.MagicMock()
             upload_response.status_code = 200  # Set status code for raise_for_status
@@ -520,14 +519,12 @@ class TestCompleteWorkflows:
             try:
                 # Upload temporary file
                 upload_result = client.files.upload(temp_image)
-                file_id = upload_result["file_id"]
 
                 # Create temporary webhook
-                webhook_result = client.webhooks.add(
+                client.webhooks.add(
                     webhook_url="https://temp.example.com/webhook",
                     event_types=["PIXELFLOW"]
                 )
-                # webhook_id would be extracted from webhook_result in real scenario
 
                 # Verify resources were created
                 assert upload_result["file_id"] == "temp_file_123"

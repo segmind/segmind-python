@@ -2,8 +2,8 @@
 
 from unittest import mock
 
-import pytest
 import httpx
+import pytest
 
 from segmind.webhooks import Webhooks
 
@@ -69,7 +69,7 @@ class TestWebhooks:
         assert result == sample_webhooks_list
         assert len(result["webhooks"]) == 2
         mock_client._request.assert_called_once_with(
-            "GET", 
+            "GET",
             "https://api.spotprod.segmind.com/webhook/get"
         )
 
@@ -337,7 +337,7 @@ class TestWebhooks:
                 }
             ]
         }
-        
+
         mock_response = mock.MagicMock()
         mock_response.json.return_value = sample_logs
         mock_client._request.return_value = mock_response
@@ -397,10 +397,10 @@ class TestWebhooks:
         # Mock responses for the sequence
         add_response = mock.MagicMock()
         add_response.json.return_value = {"status": "success", "webhook_id": "wh-workflow"}
-        
+
         update_response = mock.MagicMock()
         update_response.json.return_value = {"status": "success", "webhook_id": "wh-workflow"}
-        
+
         delete_response = mock.MagicMock()
         delete_response.json.return_value = {"status": "success", "webhook_id": "wh-workflow"}
 
@@ -432,7 +432,7 @@ class TestWebhooks:
         """Test error handling for various HTTP errors."""
         # Test 400 Bad Request
         mock_client._request.side_effect = httpx.HTTPStatusError(
-            "Bad Request", 
+            "Bad Request",
             request=mock.MagicMock(),
             response=mock.MagicMock(status_code=400)
         )
@@ -499,7 +499,7 @@ class TestWebhooks:
                 }
             ]
         }
-        
+
         mock_response = mock.MagicMock()
         mock_response.json.return_value = detailed_logs
         mock_client._request.return_value = mock_response

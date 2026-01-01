@@ -2,8 +2,8 @@
 
 from unittest import mock
 
-import pytest
 import httpx
+import pytest
 
 from segmind.accounts import Accounts
 
@@ -96,7 +96,7 @@ class TestAccounts:
         assert result["email"] == "test@example.com"
         assert result["subscription"]["plan"] == "pro"
         assert result["credits"]["balance"] == 1000
-        
+
         mock_client._request.assert_called_once_with(
             "GET",
             "https://cloud.segmind.com/api/auth/authenticate"
@@ -122,7 +122,7 @@ class TestAccounts:
             "email": "minimal@example.com",
             "subscription": {"plan": "basic", "status": "active"}
         }
-        
+
         mock_response = mock.MagicMock()
         mock_response.json.return_value = minimal_data
         mock_client._request.return_value = mock_response
@@ -157,7 +157,7 @@ class TestAccounts:
 
         with pytest.raises(httpx.HTTPStatusError) as exc_info:
             accounts.current()
-        
+
         assert exc_info.value.response.status_code == 401
 
     def test_current_account_forbidden_error(self, accounts, mock_client):
@@ -170,7 +170,7 @@ class TestAccounts:
 
         with pytest.raises(httpx.HTTPStatusError) as exc_info:
             accounts.current()
-        
+
         assert exc_info.value.response.status_code == 403
 
     def test_current_account_server_error(self, accounts, mock_client):
@@ -183,7 +183,7 @@ class TestAccounts:
 
         with pytest.raises(httpx.HTTPStatusError) as exc_info:
             accounts.current()
-        
+
         assert exc_info.value.response.status_code == 500
 
     def test_current_account_json_parsing_error(self, accounts, mock_client):
@@ -259,7 +259,7 @@ class TestAccounts:
             },
             "credits": {"balance": 0}
         }
-        
+
         mock_response = mock.MagicMock()
         mock_response.json.return_value = suspended_data
         mock_client._request.return_value = mock_response
@@ -280,7 +280,7 @@ class TestAccounts:
                 "expires_at": "2023-12-31T23:59:59Z"
             }
         }
-        
+
         mock_response = mock.MagicMock()
         mock_response.json.return_value = expired_data
         mock_client._request.return_value = mock_response
@@ -302,7 +302,7 @@ class TestAccounts:
             },
             "credits": {"balance": 500, "trial_credits": True}
         }
-        
+
         mock_response = mock.MagicMock()
         mock_response.json.return_value = trial_data
         mock_client._request.return_value = mock_response
@@ -342,7 +342,7 @@ class TestAccounts:
                 }
             }
         }
-        
+
         mock_response = mock.MagicMock()
         mock_response.json.return_value = nested_data
         mock_client._request.return_value = mock_response
@@ -363,7 +363,7 @@ class TestAccounts:
             "company": "Acme Corp & Associates",
             "bio": "Software engineer with 10+ years experience in AI/ML 🤖"
         }
-        
+
         mock_response = mock.MagicMock()
         mock_response.json.return_value = special_data
         mock_client._request.return_value = mock_response
@@ -389,7 +389,7 @@ class TestAccounts:
                 "expires_at": None
             }
         }
-        
+
         mock_response = mock.MagicMock()
         mock_response.json.return_value = null_data
         mock_client._request.return_value = mock_response
@@ -433,7 +433,7 @@ class TestAccounts:
                 "data": ["item_" + str(i) for i in range(500)]
             }
         }
-        
+
         mock_response = mock.MagicMock()
         mock_response.json.return_value = large_data
         mock_client._request.return_value = mock_response
@@ -465,5 +465,5 @@ class TestAccounts:
 
         with pytest.raises(expected_exception) as exc_info:
             accounts.current()
-        
+
         assert exc_info.value.response.status_code == status_code

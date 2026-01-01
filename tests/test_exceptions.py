@@ -112,32 +112,32 @@ class TestRaiseForStatus:
     def test_raise_for_status_with_all_4xx_codes(self):
         """Test raise_for_status with various 4xx error codes."""
         error_codes = [400, 401, 403, 404, 422, 429]
-        
+
         for code in error_codes:
             response = httpx.Response(code, json={"error": f"HTTP {code}"})
-            
+
             with pytest.raises(SegmindError) as exc_info:
                 raise_for_status(response)
-            
+
             assert exc_info.value.status == code
 
     def test_raise_for_status_with_all_5xx_codes(self):
         """Test raise_for_status with various 5xx error codes."""
         error_codes = [500, 502, 503, 504]
-        
+
         for code in error_codes:
             response = httpx.Response(code, json={"error": f"HTTP {code}"})
-            
+
             with pytest.raises(SegmindError) as exc_info:
                 raise_for_status(response)
-            
+
             assert exc_info.value.status == code
 
     @pytest.mark.parametrize("status_code", [200, 201, 202, 204, 301, 302])
     def test_raise_for_status_success_codes(self, status_code):
         """Test that non-error status codes don't raise exceptions."""
         response = httpx.Response(status_code, text="OK")
-        
+
         # Should not raise any exception
         result = raise_for_status(response)
         assert result is None
@@ -152,10 +152,10 @@ class TestRaiseForStatus:
             "request_id": "req_123456"
         }
         response = httpx.Response(422, json=error_data)
-        
+
         with pytest.raises(SegmindError) as exc_info:
             raise_for_status(response)
-        
+
         error = exc_info.value
         assert error.status == 422
         assert error.detail == "ValidationError"
@@ -163,10 +163,10 @@ class TestRaiseForStatus:
     def test_raise_for_status_with_text_response(self):
         """Test raise_for_status with plain text error response."""
         response = httpx.Response(500, text="Internal Server Error")
-        
+
         with pytest.raises(SegmindError) as exc_info:
             raise_for_status(response)
-        
+
         error = exc_info.value
         assert error.status == 500
         assert error.detail is None  # No JSON parsing for text responses
@@ -174,10 +174,10 @@ class TestRaiseForStatus:
     def test_raise_for_status_with_empty_response(self):
         """Test raise_for_status with empty error response."""
         response = httpx.Response(400, text="")
-        
+
         with pytest.raises(SegmindError) as exc_info:
             raise_for_status(response)
-        
+
         error = exc_info.value
         assert error.status == 400
         assert error.detail is None
@@ -186,10 +186,10 @@ class TestRaiseForStatus:
         """Test raise_for_status with malformed JSON response."""
         # Create a response with invalid JSON
         response = httpx.Response(400, text='{"error": invalid json')
-        
+
         with pytest.raises(SegmindError) as exc_info:
             raise_for_status(response)
-        
+
         error = exc_info.value
         assert error.status == 400
         assert error.detail is None  # Should handle JSON parsing errors gracefully
@@ -225,7 +225,7 @@ class TestSegmindErrorAdvanced:
         """Test SegmindError string representation with minimal data."""
         error = SegmindError(status=500)
         error_str = str(error)
-        
+
         assert "SegmindError Details" in error_str
         assert "status: 500" in error_str
         assert "detail: None" in error_str
@@ -266,9 +266,9 @@ class TestSegmindErrorAdvanced:
             "help_url": "https://docs.segmind.com/rate-limits"
         }
         response = httpx.Response(429, json=complex_error)
-        
+
         error = SegmindError.from_response(response)
-        
+
         assert error.status == 429
         assert error.detail == "RATE_LIMIT_EXCEEDED"
 
@@ -320,9 +320,9 @@ class TestSegmindErrorAdvanced:
     def test_segmind_error_from_response_with_empty_json(self):
         """Test SegmindError creation from empty JSON response."""
         response = httpx.Response(500, json={})
-        
+
         error = SegmindError.from_response(response)
-        
+
         assert error.status == 500
         assert error.detail is None
 
@@ -342,7 +342,7 @@ class TestSegmindErrorAdvanced:
         error1 = SegmindError(status=400, detail="Bad request")
         error2 = SegmindError(status=400, detail="Bad request")
         error3 = SegmindError(status=404, detail="Not found")
-        
+
         assert error1.__dict__ == error2.__dict__
         assert error1.__dict__ != error3.__dict__
 
@@ -350,7 +350,7 @@ class TestSegmindErrorAdvanced:
         """Test SegmindError repr method."""
         error = SegmindError(status=422, detail="Validation error")
         repr_str = repr(error)
-        
+
         assert "SegmindError" in repr_str
         assert "422" in repr_str
 
@@ -371,10 +371,10 @@ class TestSegmindErrorAdvanced:
         """Test SegmindError with very long detail message."""
         long_detail = "A" * 10000  # 10KB string
         error = SegmindError(status=500, detail=long_detail)
-        
+
         assert len(error.detail) == 10000
         assert error.detail == long_detail
-        
+
         # String representation should handle long strings
         error_str = str(error)
         assert long_detail in error_str
@@ -388,16 +388,16 @@ class TestErrorHandlingIntegration:
         def inner_function():
             response = httpx.Response(400, json={"error": "Inner error"})
             raise_for_status(response)
-        
+
         def middle_function():
             inner_function()
-        
+
         def outer_function():
             middle_function()
-        
+
         with pytest.raises(SegmindError) as exc_info:
             outer_function()
-        
+
         assert exc_info.value.status == 400
         assert exc_info.value.detail == "Inner error"
 
@@ -411,10 +411,10 @@ class TestErrorHandlingIntegration:
             except SegmindError as e:
                 # Could add additional context here
                 raise e
-        
+
         with pytest.raises(SegmindError) as exc_info:
             api_call_with_context()
-        
+
         assert exc_info.value.status == 404
 
     def test_error_handling_with_different_response_formats(self):
@@ -450,39 +450,39 @@ class TestErrorHandlingIntegration:
         # The current implementation might not, but this tests the expected behavior
         error_data = {"error": "Test error"}
         response = httpx.Response(
-            400, 
+            400,
             json=error_data,
             headers={"content-type": content_type}
         )
-        
+
         with pytest.raises(SegmindError) as exc_info:
             raise_for_status(response)
-        
+
         assert exc_info.value.status == 400
         # The detail extraction depends on implementation
 
     def test_concurrent_error_handling(self):
         """Test error handling in concurrent scenarios."""
         import threading
-        
+
         errors_caught = []
-        
+
         def worker():
             try:
                 response = httpx.Response(500, json={"error": "Concurrent error"})
                 raise_for_status(response)
             except SegmindError as e:
                 errors_caught.append(e)
-        
+
         threads = []
         for _ in range(5):
             t = threading.Thread(target=worker)
             threads.append(t)
             t.start()
-        
+
         for t in threads:
             t.join()
-        
+
         assert len(errors_caught) == 5
         for error in errors_caught:
             assert error.status == 500

@@ -232,7 +232,7 @@ class TestClientAdvancedFeatures:
             "https://api.segmind.com/v1/",
             "https://api.segmind.com/v1//",
         ]
-        
+
         for url in urls_to_test:
             client = SegmindClient(api_key=mock_api_key, base_url=url)
             assert client.base_url == "https://api.segmind.com/v1"
@@ -240,11 +240,11 @@ class TestClientAdvancedFeatures:
     def test_client_timeout_edge_cases(self, mock_api_key):
         """Test client timeout with edge case values."""
         timeout_values = [0.1, 1.0, 30.0, 60.0, 300.0]
-        
+
         for timeout in timeout_values:
             client = SegmindClient(api_key=mock_api_key, timeout=timeout)
             assert client.timeout == timeout
-            
+
             http_client = client._build_client()
             assert http_client.timeout.read == timeout
 
@@ -263,7 +263,7 @@ class TestClientAdvancedFeatures:
             base_url="https://custom.api.com/v2",
             timeout=45.0
         )
-        
+
         assert client.api_key == mock_api_key
         assert client.base_url == "https://custom.api.com/v2"
         assert client.timeout == 45.0
@@ -352,15 +352,15 @@ class TestClientAdvancedFeatures:
 
             client = SegmindClient(api_key=mock_api_key)
             response = client._request(
-                "GET", 
-                "test-endpoint", 
+                "GET",
+                "test-endpoint",
                 params={"page": 1, "limit": 10, "filter": "active"}
             )
 
             assert response.status_code == 200
             mock_client.request.assert_called_once_with(
-                "GET", 
-                "test-endpoint", 
+                "GET",
+                "test-endpoint",
                 params={"page": 1, "limit": 10, "filter": "active"}
             )
 
@@ -376,18 +376,18 @@ class TestClientAdvancedFeatures:
 
             client = SegmindClient(api_key=mock_api_key)
             additional_headers = {"X-Custom-Header": "value", "X-Request-ID": "12345"}
-            
+
             response = client._request(
-                "POST", 
-                "test-endpoint", 
+                "POST",
+                "test-endpoint",
                 headers=additional_headers,
                 json={"test": "data"}
             )
 
             assert response.status_code == 200
             mock_client.request.assert_called_once_with(
-                "POST", 
-                "test-endpoint", 
+                "POST",
+                "test-endpoint",
                 headers=additional_headers,
                 json={"test": "data"}
             )
@@ -404,13 +404,13 @@ class TestClientAdvancedFeatures:
 
             client = SegmindClient(api_key=mock_api_key)
             files_data = {"file": ("test.txt", b"test content", "text/plain")}
-            
+
             response = client._request("POST", "upload-endpoint", files=files_data)
 
             assert response.status_code == 200
             mock_client.request.assert_called_once_with(
-                "POST", 
-                "upload-endpoint", 
+                "POST",
+                "upload-endpoint",
                 files=files_data
             )
 
@@ -418,22 +418,22 @@ class TestClientAdvancedFeatures:
         """Test that connect timeout is properly configured."""
         client = SegmindClient(api_key=mock_api_key, timeout=30.0)
         http_client = client._build_client()
-        
+
         assert http_client.timeout.connect == 5.0  # Default connect timeout
         assert http_client.timeout.read == 30.0
 
     def test_service_properties_type_consistency(self, mock_api_key):
         """Test that service properties return correct types consistently."""
         client = SegmindClient(api_key=mock_api_key)
-        
+
         # Test multiple accesses return same instance type
         models1 = client.models
         models2 = client.models
-        assert type(models1) == type(models2)
-        
+        assert isinstance(models1, type(models2))
+
         generations1 = client.generations
         generations2 = client.generations
-        assert type(generations1) == type(generations2)
+        assert isinstance(generations1, type(generations2))
 
     def test_client_with_none_values(self, mock_api_key):
         """Test client initialization with default values (not passing params)."""
@@ -449,32 +449,32 @@ class TestClientAdvancedFeatures:
     def test_error_propagation_in_run_method(self, mock_api_key):
         """Test that various errors are properly propagated in run method."""
         import httpx
-        
+
         with mock.patch("segmind.client.httpx.Client") as mock_client_class:
             mock_client = mock.MagicMock()
-            
+
             # Test network error
             mock_client.post.side_effect = httpx.NetworkError("Connection failed")
             mock_client_class.return_value = mock_client
 
             client = SegmindClient(api_key=mock_api_key)
-            
+
             with pytest.raises(httpx.NetworkError):
                 client.run("test-model", prompt="test")
 
     def test_error_propagation_in_request_method(self, mock_api_key):
         """Test that various errors are properly propagated in _request method."""
         import httpx
-        
+
         with mock.patch("segmind.client.httpx.Client") as mock_client_class:
             mock_client = mock.MagicMock()
-            
+
             # Test timeout error
             mock_client.request.side_effect = httpx.TimeoutException("Request timed out")
             mock_client_class.return_value = mock_client
 
             client = SegmindClient(api_key=mock_api_key)
-            
+
             with pytest.raises(httpx.TimeoutException):
                 client._request("GET", "test-endpoint")
 
@@ -498,10 +498,10 @@ class TestClientAdvancedFeatures:
     def test_client_recreates_http_client_on_build(self, mock_api_key):
         """Test that _build_client creates a new client instance each time."""
         client = SegmindClient(api_key=mock_api_key)
-        
+
         http_client1 = client._build_client()
         http_client2 = client._build_client()
-        
+
         # Should be different instances
         assert http_client1 is not http_client2
         # But with same configuration
@@ -518,14 +518,14 @@ class TestClientAdvancedFeatures:
             mock_client_class.return_value = mock_client
 
             client = SegmindClient(api_key=mock_api_key)
-            
+
             # Test various model slug formats
             test_cases = [
                 ("simple-model", "/simple-model"),
                 ("namespace/model", "/namespace/model"),
                 ("model-v1.2.3", "/model-v1.2.3"),
             ]
-            
+
             for model_slug, expected_url in test_cases:
                 client.run(model_slug, prompt="test")
                 call_args = mock_client.post.call_args
@@ -534,16 +534,16 @@ class TestClientAdvancedFeatures:
     def test_stream_method_current_implementation(self, mock_api_key):
         """Test current implementation of stream method."""
         client = SegmindClient(api_key=mock_api_key)
-        
+
         # Current implementation returns None
         result = client.stream("test-model", prompt="test", stream=True)
         assert result is None
-        
+
         # Test with various parameters
         result = client.stream(
-            "complex-model", 
-            prompt="test", 
-            max_tokens=100, 
+            "complex-model",
+            prompt="test",
+            max_tokens=100,
             temperature=0.7
         )
         assert result is None
@@ -552,7 +552,7 @@ class TestClientAdvancedFeatures:
         """Test that multiple client instances are properly isolated."""
         client1 = SegmindClient(api_key="key1", base_url="https://api1.com")
         client2 = SegmindClient(api_key="key2", base_url="https://api2.com")
-        
+
         assert client1.api_key != client2.api_key
         assert client1.base_url != client2.base_url
         assert client1._client is not client2._client
@@ -561,12 +561,12 @@ class TestClientAdvancedFeatures:
         """Test that service namespaces are independent between clients."""
         client1 = SegmindClient(api_key=mock_api_key)
         client2 = SegmindClient(api_key=mock_api_key)
-        
+
         # Services should be different instances
         assert client1.models is not client2.models
         assert client1.generations is not client2.generations
         assert client1.files is not client2.files
-        
+
         # But should reference their respective clients
         assert client1.models._client is client1
         assert client2.models._client is client2

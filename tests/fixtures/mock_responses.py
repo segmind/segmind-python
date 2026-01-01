@@ -1,10 +1,10 @@
 """Mock response fixtures for testing API interactions."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from unittest import mock
 
-import pytest
 import httpx
+import pytest
 
 
 @pytest.fixture
@@ -442,20 +442,20 @@ def create_mock_response():
     ) -> mock.MagicMock:
         response = mock.MagicMock(spec=httpx.Response)
         response.status_code = status_code
-        
+
         if json_data is not None:
             response.json.return_value = json_data
         elif text_data is not None:
             response.text = text_data
             response.json.side_effect = ValueError("No JSON object could be decoded")
-        
+
         if headers:
             response.headers = headers
         else:
             response.headers = {"content-type": "application/json"}
-        
+
         return response
-    
+
     return _create_response
 
 

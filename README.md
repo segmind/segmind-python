@@ -26,7 +26,7 @@ response = client.run(
 )
 
 # Save the image
-with open("sunset.jpg", "wb") as f:
+with open("sunset2.jpg", "wb") as f:
     f.write(response.content)
 ```
 
@@ -127,13 +127,72 @@ except SegmindError as e:
     print(f"Status Code: {e.status}")
 ```
 
+## Development
+
+### Setup Development Environment
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/segmind/segmind-python-internal.git
+   cd segmind-python-internal
+   ```
+
+2. **Install development dependencies**:
+   ```bash
+   pip install -e ".[test,dev]"
+   ```
+
+3. **Install pre-commit hooks**:
+   ```bash
+   pre-commit install
+   ```
+
+### Running Tests
+
+```bash
+# Run all tests
+make test
+
+# Run with coverage
+make test-coverage
+
+# Run verbose
+make test-verbose
+```
+
+### Linting and Formatting
+
+```bash
+# Run all pre-commit checks
+make lint
+
+# Or run pre-commit directly
+pre-commit run --all-files
+```
+
+### Building the Package
+
+```bash
+# Build distribution packages
+make build
+
+# Build and check with twine
+make build-check
+```
+
+### Releasing
+
+For information on creating releases and publishing to PyPI, see [RELEASING.md](RELEASING.md).
+
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Run tests
+4. Run tests and linting (see Development section)
 5. Submit a pull request
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed contribution guidelines.
 
 ## License
 

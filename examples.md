@@ -4,6 +4,8 @@ This document provides usage examples for all the modules in the Segmind Python 
 
 ## Client Setup
 
+export SEGMIND_API_KEY="your_api_key_here"
+
 ```python
 from segmind import SegmindClient
 

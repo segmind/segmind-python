@@ -39,7 +39,7 @@ We use GitHub issues to track public bugs. Report a bug by [opening a new issue]
 
 ## Coding Style
 
-`torchtune` uses pre-commit hooks to ensure style consistency and prevent common mistakes. Enable it by:
+This project uses pre-commit hooks to ensure style consistency and prevent common mistakes. Enable it by:
 
 ```bash
 pre-commit install
@@ -56,3 +56,47 @@ pre-commit run --all-files
 ### Commit format
 
 Please follow [conventional commits specification](https://www.conventionalcommits.org/) for descriptions/messages.
+
+## Development Workflow
+
+### Setting Up Your Development Environment
+
+1. Fork the repository and clone your fork
+2. Install development dependencies:
+   ```bash
+   pip install -e ".[test,dev]"
+   ```
+3. Install pre-commit hooks:
+   ```bash
+   pre-commit install
+   ```
+
+### Running Tests
+
+Before submitting a pull request, ensure all tests pass:
+
+```bash
+# Run all tests
+make test
+
+# Run with coverage
+make test-coverage
+```
+
+### Code Quality Checks
+
+Run linting and formatting checks:
+
+```bash
+# Run all pre-commit checks
+make lint
+
+# Or manually
+pre-commit run --all-files
+```
+
+## Release Process
+
+If you are a maintainer with publishing permissions, see [RELEASING.md](RELEASING.md) for detailed instructions on creating releases and publishing to PyPI.
+
+Regular contributors do not need to worry about releases - maintainers will handle versioning and publishing.

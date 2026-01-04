@@ -101,6 +101,10 @@ webhooks = segmind.webhooks.get()
 
 ### Finetuning
 ```python
+from segmind import SegmindClient
+
+client = SegmindClient()
+
 # Get a presigned URL to upload your dataset (.zip)
 upload = client.finetune.upload_presigned_url(name="my-dataset.zip")
 # upload["presigned_url"] can be used with a PUT request to S3
@@ -142,10 +146,11 @@ For detailed examples and API reference, see [examples.md](examples.md).
 
 Public API Playground (Swagger UI): open `docs/swagger.html` after building docs, or serve `docs/` statically. It loads the spec at `docs/_static/openapi/segmind-sdk.yaml` and supports the Authorize flow with `x-api-key`.
 
-Run this to serve the documentation.
-```python
-python3 -m http.server 8000
+Run this to serve the documentation:
+```bash
+cd docs && python3 -m http.server 8000
 ```
+Then open http://localhost:8000 in your browser.
 
 ## Requirements
 
@@ -174,8 +179,8 @@ except SegmindError as e:
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/segmind/segmind-python-internal.git
-   cd segmind-python-internal
+   git clone https://github.com/segmind/segmind-python.git
+   cd segmind-python
    ```
 
 2. **Install development dependencies**:
@@ -243,6 +248,6 @@ This project is licensed under the MIT License.
 ## Support
 
 For support and questions:
-- GitHub Issues: [Report bugs or request features](https://github.com/segmind/segmind-python)
+- GitHub Issues: [Report bugs or request features](https://github.com/segmind/segmind-python/issues)
 - Documentation: [API Documentation](https://docs.segmind.com)
 - Examples: See [examples.md](examples.md) for comprehensive usage examples

@@ -207,7 +207,7 @@ If you need to publish immediately without creating a GitHub Release:
 3. Fill in:
    - **PyPI Project Name**: `segmind`
    - **Owner**: `segmind` (GitHub organization)
-   - **Repository name**: `segmind-python-internal`
+   - **Repository name**: `segmind-python`
    - **Workflow name**: `publish.yml`
    - **Environment name**: `pypi`
 4. Click "Add"
@@ -253,4 +253,4 @@ If Trusted Publishers aren't available:
 - [TestPyPI](https://test.pypi.org/project/segmind/)
 - [Semantic Versioning](https://semver.org/)
 - [Python Packaging Guide](https://packaging.python.org/)
-- [GitHub Actions](https://github.com/segmind/segmind-python-internal/actions)
+- [GitHub Actions](https://github.com/segmind/segmind-python/actions)

@@ -6,6 +6,8 @@ A Python client library for interacting with Segmind APIs, providing easy access
 
 ```bash
 pip install segmind
+
+export SEGMIND_API_KEY="your_api_key_here"
 ```
 
 ## Quick Start

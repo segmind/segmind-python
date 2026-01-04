@@ -23,7 +23,7 @@ from typing import Optional
 
 from segmind.client import SegmindClient
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
 # Default client (lazily initialized)
 _default_client: Optional[SegmindClient] = None

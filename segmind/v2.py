@@ -12,10 +12,9 @@ This module provides:
     client.run_async(slug, **params)    -> dict      # submit + wait
     AsyncJob.wait(timeout, interval)    -> dict      # block to completion
 
-Defaults: 1.0s poll interval, 600s overall timeout. Server-side polling
-hints (cancelled in SEG-243) are NOT consumed; this is a deliberately
-simple client. If a slug is known to be very slow, pass a larger
-`timeout` and `interval` per call, or use webhooks (SEG-93) instead.
+Defaults are 1.0s poll interval, 600s overall timeout. For slugs known to
+be slow (long video, long-running LLM), pass a larger `timeout` and
+`interval` per call. For fire-and-forget patterns, use webhooks.
 """
 
 from __future__ import annotations
@@ -33,24 +32,21 @@ if TYPE_CHECKING:
 DEFAULT_POLL_INTERVAL_S = 1.0
 DEFAULT_POLL_TIMEOUT_S = 600.0
 
-# Status strings reported by the v2 status endpoint. Anything outside
-# this set is treated as in-progress (forward-compat with future states).
-_TERMINAL_STATES = ("COMPLETED", "FAILED")
-
 
 class InferenceFailed(SegmindError):
     """Raised when a v2 async request reaches the FAILED state.
 
-    The server-provided error message is in `detail`; the full server
-    body is on `.response_body` for callers that need the metrics /
-    request_id alongside the failure.
+    Server-provided error string is in `detail`. The status-endpoint body
+    is on `.status_body` for callers that want the raw payload; if you
+    need server-side metrics or a fuller failure record, call
+    `AsyncJob.result()` separately after catching.
     """
 
-    response_body: dict[str, Any]
+    status_body: dict[str, Any]
 
-    def __init__(self, detail: str | None, response_body: dict[str, Any]) -> None:
+    def __init__(self, detail: str | None, status_body: dict[str, Any]) -> None:
         super().__init__(status=None, detail=detail)
-        self.response_body = response_body
+        self.status_body = status_body
 
 
 class InferenceTimeout(SegmindError):
@@ -117,7 +113,7 @@ class AsyncJob:
 
         Raises:
             InferenceFailed: status reached FAILED. The server error string
-                is in `e.detail`; the full body in `e.response_body`.
+                is in `e.detail`; the raw status body in `e.status_body`.
             InferenceTimeout: `timeout` elapsed before a terminal state.
         """
         deadline = time.monotonic() + timeout
@@ -129,11 +125,13 @@ class AsyncJob:
                 return self.result()
 
             if state == "FAILED":
-                # /status carries the error for FAILED; pull the full body
-                # so the exception caller has metrics + request_id alongside.
-                final = self.result()
-                err = final.get("error") or status_body.get("error")
-                raise InferenceFailed(detail=err, response_body=final)
+                # /status already carries the error string for FAILED (heimdall
+                # SEG-97). Build the exception from the status body directly so
+                # we don't pay a second HTTP round-trip on every failure path.
+                raise InferenceFailed(
+                    detail=status_body.get("error"),
+                    status_body=status_body,
+                )
 
             if time.monotonic() >= deadline:
                 raise InferenceTimeout(

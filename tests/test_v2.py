@@ -127,11 +127,12 @@ def test_wait_raises_inference_failed_on_failed(client):
     respx.get(f"{API_HOST}/v2/requests/{REQ_ID}/status").mock(
         return_value=httpx.Response(200, json={"status": "FAILED", "error": "boom"})
     )
-    respx.get(f"{API_HOST}/v2/requests/{REQ_ID}").mock(
-        return_value=httpx.Response(
-            200,
-            json={"status": "FAILED", "error": "boom", "metrics": {}},
-        )
+    # The response-URL mock must NOT be hit on FAILED — the exception is
+    # built from the status body alone. If wait() ever regresses to fetching
+    # the result on failure, this mock will fire and `result_route.called`
+    # below will flip True.
+    result_route = respx.get(f"{API_HOST}/v2/requests/{REQ_ID}").mock(
+        return_value=httpx.Response(200, json={"_unused": True})
     )
 
     job = client.submit_async(SLUG)
@@ -139,7 +140,8 @@ def test_wait_raises_inference_failed_on_failed(client):
         job.wait(timeout=5, interval=0.01)
 
     assert exc.value.detail == "boom"
-    assert exc.value.response_body["status"] == "FAILED"
+    assert exc.value.status_body["status"] == "FAILED"
+    assert result_route.called is False, "FAILED path should not GET the response URL"
 
 
 @respx.mock

@@ -3,6 +3,7 @@ from typing import Optional
 
 import httpx
 
+from segmind import v2 as _v2
 from segmind.accounts import Accounts
 from segmind.exceptions import raise_for_status
 from segmind.files import Files
@@ -71,6 +72,45 @@ class SegmindClient:
         response = self._client.post(f"/{slug}", json=params)
         raise_for_status(response)
         return response
+
+    def submit_async(self, slug: str, **params) -> "_v2.AsyncJob":
+        """Submit a v2 async inference request and return a job handle.
+
+        The handle exposes `wait()`, `status()`, and `result()`. Use `wait()`
+        to block until COMPLETED or FAILED. Default poll interval 1.0s,
+        timeout 600s — override per-call for very slow models.
+
+        Args:
+            slug: Model slug/identifier.
+            **params: Parameters to pass to the model.
+
+        Returns:
+            AsyncJob handle wrapping the submit response.
+        """
+        return _v2.submit(self, slug, **params)
+
+    def run_async(
+        self,
+        slug: str,
+        *,
+        timeout: float = _v2.DEFAULT_POLL_TIMEOUT_S,
+        interval: float = _v2.DEFAULT_POLL_INTERVAL_S,
+        **params,
+    ) -> dict:
+        """One-shot v2 async inference: submit + wait. Returns the final
+        response body (the same dict you'd get from polling to COMPLETED).
+
+        Args:
+            slug: Model slug/identifier.
+            timeout: Hard deadline in seconds (default 600s).
+            interval: Status-poll cadence (default 1.0s).
+            **params: Parameters to pass to the model.
+
+        Raises:
+            v2.InferenceFailed: server returned FAILED.
+            v2.InferenceTimeout: timeout elapsed before terminal state.
+        """
+        return _v2.run(self, slug, timeout=timeout, interval=interval, **params)
 
     def stream(self, slug: str, **params) -> httpx.Response:
         """Stream a model inference request (not implemented).

@@ -45,7 +45,12 @@ class SegmindClient:
         headers = {
             # "Content-Type": "application/json",
             "User-Agent": "segmind-python-sdk/0.1.0",
-            "X-Initiator": "segmind-python-sdk/0.1.0",
+            # SEG-319: identifies SDK traffic in spotdb. Heimdall passes
+            # X-Initiator through verbatim on sync (-> "SDK-PY") and suffixes
+            # "-V2" on the v2-async path (-> "SDK-PY-V2"). Must match the
+            # InitiatorType enum in spot-backend or it's coerced to OTHERS.
+            # Version detail stays in User-Agent above.
+            "X-Initiator": "SDK-PY",
         }
         if self.api_key:
             headers["x-api-key"] = self.api_key

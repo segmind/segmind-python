@@ -23,7 +23,7 @@ import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from segmind.exceptions import SegmindError
+from segmind.exceptions import SegmindError, raise_for_status
 
 if TYPE_CHECKING:
     from segmind.client import SegmindClient
@@ -31,6 +31,11 @@ if TYPE_CHECKING:
 
 DEFAULT_POLL_INTERVAL_S = 1.0
 DEFAULT_POLL_TIMEOUT_S = 600.0
+
+# heimdall's /v2/requests/{id}/status returns HTTP 422 on FAILED while still
+# carrying a status=FAILED body. We treat a body that announces a known
+# terminal state as a valid payload regardless of the HTTP code.
+_TERMINAL_STATES = ("COMPLETED", "FAILED")
 
 
 class InferenceFailed(SegmindError):
@@ -88,13 +93,39 @@ class AsyncJob:
         `status` field is one of `QUEUED`, `PROCESSING`, `COMPLETED`,
         `FAILED`. On `FAILED`, the body also includes `error`.
         """
-        resp = self._client._request("GET", self.status_url)
-        return resp.json()
+        return self._fetch_terminal_tolerant(self.status_url)
 
     def result(self) -> dict[str, Any]:
-        """Fetch the final response body. Only meaningful once status is COMPLETED."""
-        resp = self._client._request("GET", self.response_url)
-        return resp.json()
+        """Fetch the final response body. Only meaningful once status is
+        COMPLETED — for a FAILED task the body is also returned (heimdall
+        serves it under HTTP 422)."""
+        return self._fetch_terminal_tolerant(self.response_url)
+
+    def _fetch_terminal_tolerant(self, url: str) -> dict[str, Any]:
+        """GET a v2 status / response URL, tolerating heimdall's 4xx-on-FAILED.
+
+        heimdall returns the FAILED body under HTTP 422 on both `/status` and
+        `/requests/{id}`. The body itself still carries the terminal state
+        (`status="FAILED"`, plus `error`). Treat any body that announces a
+        recognised terminal state as a valid payload, regardless of HTTP code;
+        otherwise fall through to the existing `raise_for_status` so genuine
+        transport errors (401/404/5xx, missing body) still surface as
+        `SegmindError`.
+        """
+        # Use the underlying httpx client directly so we can inspect the body
+        # before deciding whether the non-2xx is a transport error or a FAILED
+        # task body served with a 4xx code.
+        resp = self._client._client.request("GET", url)
+        try:
+            body = resp.json()
+        except ValueError:
+            body = {}
+        if isinstance(body, dict) and body.get("status") in _TERMINAL_STATES:
+            return body
+        if resp.is_success:
+            return body if isinstance(body, dict) else {}
+        raise_for_status(resp)
+        return body  # unreachable; raise_for_status raised
 
     def wait(
         self,
@@ -109,14 +140,19 @@ class AsyncJob:
             interval: Sleep between status polls. Default 1.0s.
 
         Returns:
-            The server body from `GET /v2/requests/{id}` on COMPLETED.
+            The server body from `GET /v2/requests/{id}` on COMPLETED. Shape
+            varies by model — every model carries `status`, `metrics`, and an
+            `output` key, but the rest of the response is model-specific
+            (e.g. image models include the image URL; mock-inference includes
+            `partial` / `reasoning`). Don't assume a fixed key set.
 
         Raises:
             InferenceFailed: status reached FAILED. The server error string
                 is in `e.detail`; the raw status body in `e.status_body`.
             InferenceTimeout: `timeout` elapsed before a terminal state.
         """
-        deadline = time.monotonic() + timeout
+        start = time.monotonic()
+        deadline = start + timeout
         while True:
             status_body = self.status()
             state = status_body.get("status")
@@ -136,7 +172,7 @@ class AsyncJob:
             if time.monotonic() >= deadline:
                 raise InferenceTimeout(
                     request_id=self.request_id,
-                    elapsed_s=timeout,
+                    elapsed_s=time.monotonic() - start,
                 )
 
             time.sleep(interval)

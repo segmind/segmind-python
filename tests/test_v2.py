@@ -145,6 +145,56 @@ def test_wait_raises_inference_failed_on_failed(client):
 
 
 @respx.mock
+def test_wait_raises_inference_failed_on_4xx_terminal_body(client):
+    """Regression test for the heimdall behaviour reported on SEG-52:
+    /v2/requests/{id}/status returns HTTP 422 on FAILED while still carrying
+    a `status=FAILED` body. We must surface this as `InferenceFailed`, not
+    as a `SegmindError(422)` swallowing the failure detail.
+    """
+    respx.post(f"{API_HOST}/v2/{SLUG}").mock(return_value=httpx.Response(200, json=SUBMIT_BODY))
+    respx.get(f"{API_HOST}/v2/requests/{REQ_ID}/status").mock(
+        return_value=httpx.Response(
+            422,
+            json={
+                "status": "FAILED",
+                "error": "Validation error in MockInferenceProcessor: sleep must be …",
+                "metrics": {"inference_time": 0.008},
+                "request_id": REQ_ID,
+            },
+        ),
+    )
+
+    job = client.submit_async(SLUG)
+    with pytest.raises(InferenceFailed) as exc:
+        job.wait(timeout=5, interval=0.01)
+
+    assert "Validation error" in (exc.value.detail or "")
+    assert exc.value.status_body["status"] == "FAILED"
+
+
+@respx.mock
+def test_wait_propagates_genuine_transport_error(client):
+    """A non-terminal 4xx (auth failure, missing resource, …) without a
+    `status=FAILED` body must still raise `SegmindError` — we don't want the
+    422-tolerance above to swallow real transport failures."""
+    respx.post(f"{API_HOST}/v2/{SLUG}").mock(return_value=httpx.Response(200, json=SUBMIT_BODY))
+    respx.get(f"{API_HOST}/v2/requests/{REQ_ID}/status").mock(
+        return_value=httpx.Response(401, json={"error": "Invalid API key"})
+    )
+
+    from segmind.exceptions import SegmindError
+
+    job = client.submit_async(SLUG)
+    with pytest.raises(SegmindError) as exc:
+        job.wait(timeout=5, interval=0.01)
+
+    assert exc.value.status == 401
+    # And specifically NOT InferenceFailed — that's reserved for terminal-FAILED
+    # bodies.
+    assert not isinstance(exc.value, InferenceFailed)
+
+
+@respx.mock
 def test_wait_raises_inference_timeout(client):
     respx.post(f"{API_HOST}/v2/{SLUG}").mock(return_value=httpx.Response(200, json=SUBMIT_BODY))
     respx.get(f"{API_HOST}/v2/requests/{REQ_ID}/status").mock(

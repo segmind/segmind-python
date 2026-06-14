@@ -36,7 +36,9 @@ class TestSegmindClient:
 
         assert http_client.headers["x-api-key"] == mock_api_key
         assert http_client.headers["User-Agent"] == "segmind-python-sdk/0.1.0"
-        assert http_client.headers["X-Initiator"] == "segmind-python-sdk/0.1.0"
+        # SEG-319: stable initiator token so spotdb can attribute SDK traffic
+        # (heimdall suffixes -V2 on the v2-async path -> "SDK-PY-V2").
+        assert http_client.headers["X-Initiator"] == "SDK-PY"
 
 
     def test_http_client_headers_without_api_key(self):
@@ -46,7 +48,7 @@ class TestSegmindClient:
 
         assert "x-api-key" not in http_client.headers
         assert http_client.headers["User-Agent"] == "segmind-python-sdk/0.1.0"
-        assert http_client.headers["X-Initiator"] == "segmind-python-sdk/0.1.0"
+        assert http_client.headers["X-Initiator"] == "SDK-PY"
 
 
     def test_http_client_timeout_configuration(self, mock_api_key):

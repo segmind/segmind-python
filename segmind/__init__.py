@@ -6,10 +6,18 @@ PixelFlows, webhooks, file uploads, and more.
 Usage:
     import segmind
 
-    # Run a model
+    # Run a model (sync v1)
     response = segmind.run("seedream-v3-text-to-image", prompt="A sunset")
     with open("image.jpg", "wb") as f:
         f.write(response.content)
+
+    # Run a model (v2 async — submit + poll until done)
+    result = segmind.run_async("seedance-1-pro", prompt="A sunset", timeout=300)
+
+    # Or split the submit / wait for finer control
+    job = segmind.submit_async("seedance-1-pro", prompt="A sunset")
+    print(job.request_id)
+    result = job.wait(timeout=300)
 
     # Upload files
     result = segmind.files.upload("image.png")
@@ -22,6 +30,13 @@ Usage:
 from typing import Optional
 
 from segmind.client import SegmindClient
+from segmind.v2 import (
+    DEFAULT_POLL_INTERVAL_S,
+    DEFAULT_POLL_TIMEOUT_S,
+    AsyncJob,
+    InferenceFailed,
+    InferenceTimeout,
+)
 
 __version__ = "1.0.0"
 
@@ -38,7 +53,7 @@ def _get_client() -> SegmindClient:
 
 
 def run(slug: str, **params):
-    """Run a model inference request.
+    """Run a sync (v1) model inference request.
 
     Args:
         slug: Model slug/identifier
@@ -54,6 +69,55 @@ def run(slug: str, **params):
             f.write(response.content)
     """
     return _get_client().run(slug, **params)
+
+
+def submit_async(slug: str, **params) -> AsyncJob:
+    """Submit a v2 async inference request and return a job handle.
+
+    The handle exposes `.wait()`, `.status()`, and `.result()`. Use `.wait()`
+    to block until COMPLETED or FAILED. Useful when you want to track the
+    request_id, run other work in parallel, or batch many submissions.
+
+    Args:
+        slug: Model slug/identifier.
+        **params: Parameters to pass to the model.
+
+    Example:
+        import segmind
+        job = segmind.submit_async("seedance-1-pro", prompt="A sunset")
+        print(job.request_id)
+        result = job.wait(timeout=300)
+    """
+    return _get_client().submit_async(slug, **params)
+
+
+def run_async(
+    slug: str,
+    *,
+    timeout: float = DEFAULT_POLL_TIMEOUT_S,
+    interval: float = DEFAULT_POLL_INTERVAL_S,
+    **params,
+) -> dict:
+    """Run a v2 async inference request to completion (submit + poll).
+
+    Args:
+        slug: Model slug/identifier.
+        timeout: Hard deadline in seconds (default 600s).
+        interval: Status-poll cadence (default 1.0s).
+        **params: Parameters to pass to the model.
+
+    Returns:
+        The final response body once the task reaches COMPLETED.
+
+    Raises:
+        segmind.InferenceFailed: server returned FAILED.
+        segmind.InferenceTimeout: timeout elapsed before terminal state.
+
+    Example:
+        import segmind
+        result = segmind.run_async("seedance-1-pro", prompt="A sunset", timeout=300)
+    """
+    return _get_client().run_async(slug, timeout=timeout, interval=interval, **params)
 
 
 # Namespace proxies
@@ -123,11 +187,18 @@ models = _Models()
 generations = _Generations()
 
 __all__ = [
+    "DEFAULT_POLL_INTERVAL_S",
+    "DEFAULT_POLL_TIMEOUT_S",
+    "AsyncJob",
+    "InferenceFailed",
+    "InferenceTimeout",
     "SegmindClient",
     "files",
     "generations",
     "models",
     "pixelflows",
     "run",
+    "run_async",
+    "submit_async",
     "webhooks",
 ]

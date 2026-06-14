@@ -62,7 +62,7 @@ def test_submit_async_propagates_4xx_as_segmind_error(client):
         return_value=httpx.Response(401, json={"error": "Invalid API key"})
     )
 
-    with pytest.raises(segmind.SegmindError if hasattr(segmind, "SegmindError") else Exception):
+    with pytest.raises(segmind.SegmindError):
         client.submit_async(SLUG)
 
 
@@ -222,9 +222,34 @@ def test_run_async_one_shot(client):
         return_value=httpx.Response(200, json=RESULT_BODY)
     )
 
-    out = client.run_async(SLUG, sleep=1, credits=1e-6, timeout=5, interval=0.01)
+    out = client.run_async(SLUG, sleep=1, credits=1e-6)
 
     assert out == RESULT_BODY
+
+
+@respx.mock
+def test_run_async_forwards_reserved_named_params_to_body(client):
+    """SEG-339: run_async takes no timeout/interval control kwargs, so a model
+    param literally named `interval` (or `timeout`) is forwarded to the request
+    body instead of being shadowed. Regression for the flux-pro `interval` clash.
+    """
+    route = respx.post(f"{API_HOST}/v2/{SLUG}").mock(
+        return_value=httpx.Response(200, json=SUBMIT_BODY)
+    )
+    respx.get(f"{API_HOST}/v2/requests/{REQ_ID}/status").mock(
+        return_value=httpx.Response(200, json={"status": "COMPLETED"})
+    )
+    respx.get(f"{API_HOST}/v2/requests/{REQ_ID}").mock(
+        return_value=httpx.Response(200, json=RESULT_BODY)
+    )
+
+    out = client.run_async(SLUG, prompt="hi", interval=4, timeout=7)
+
+    assert out == RESULT_BODY
+    import json
+
+    sent = json.loads(route.calls.last.request.content)
+    assert sent == {"prompt": "hi", "interval": 4, "timeout": 7}
 
 
 # ---- staging base_url derivation -------------------------------------------
@@ -267,7 +292,7 @@ def test_module_level_run_async_uses_default_client():
     with patch.dict(os.environ, {"SEGMIND_API_KEY": "sk-test"}):
         # Reset the cached default client so it picks up the env var.
         segmind._default_client = None
-        out = segmind.run_async(SLUG, sleep=1, timeout=5, interval=0.01)
+        out = segmind.run_async(SLUG, sleep=1)
 
     assert out == RESULT_BODY
 
@@ -283,3 +308,21 @@ def test_module_exports_v2_symbols():
     assert hasattr(segmind, "InferenceTimeout")
     assert "submit_async" in segmind.__all__
     assert "run_async" in segmind.__all__
+
+
+def test_segmind_error_exported_at_top_level():
+    """SEG-337: the base error class is importable as `segmind.SegmindError`
+    so a broad `except segmind.SegmindError` catch works."""
+    assert hasattr(segmind, "SegmindError")
+    assert "SegmindError" in segmind.__all__
+    assert issubclass(segmind.InferenceFailed, segmind.SegmindError)
+    assert issubclass(segmind.InferenceTimeout, segmind.SegmindError)
+
+
+def test_user_agent_tracks_package_version():
+    """SEG-338: the UA version is driven by __version__ (single source of
+    truth), not a hardcoded string that drifts."""
+    c = SegmindClient(api_key="sk-test")
+    assert c._client.headers["user-agent"] == f"segmind-python-sdk/{segmind.__version__}"
+    # initiator tag stays SDK-PY (heimdall suffixes -V2 on the v2 path)
+    assert c._client.headers["x-initiator"] == "SDK-PY"

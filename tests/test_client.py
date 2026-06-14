@@ -4,6 +4,7 @@ from unittest import mock
 
 import pytest
 
+import segmind
 from segmind.client import SegmindClient
 from segmind.exceptions import SegmindError
 
@@ -35,7 +36,7 @@ class TestSegmindClient:
         http_client = client._build_client()
 
         assert http_client.headers["x-api-key"] == mock_api_key
-        assert http_client.headers["User-Agent"] == "segmind-python-sdk/0.1.0"
+        assert http_client.headers["User-Agent"] == f"segmind-python-sdk/{segmind.__version__}"
         # SEG-319: stable initiator token so spotdb can attribute SDK traffic
         # (heimdall suffixes -V2 on the v2-async path -> "SDK-PY-V2").
         assert http_client.headers["X-Initiator"] == "SDK-PY"
@@ -47,7 +48,7 @@ class TestSegmindClient:
         http_client = client._build_client()
 
         assert "x-api-key" not in http_client.headers
-        assert http_client.headers["User-Agent"] == "segmind-python-sdk/0.1.0"
+        assert http_client.headers["User-Agent"] == f"segmind-python-sdk/{segmind.__version__}"
         assert http_client.headers["X-Initiator"] == "SDK-PY"
 
 
@@ -256,7 +257,7 @@ class TestClientAdvancedFeatures:
         http_client = client._build_client()
 
         assert "User-Agent" in http_client.headers
-        assert http_client.headers["User-Agent"] == "segmind-python-sdk/0.1.0"
+        assert http_client.headers["User-Agent"] == f"segmind-python-sdk/{segmind.__version__}"
 
     def test_client_initialization_with_all_parameters(self, mock_api_key):
         """Test client initialization with all parameters specified."""

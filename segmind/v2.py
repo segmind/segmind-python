@@ -208,19 +208,16 @@ def submit(client: SegmindClient, slug: str, **params) -> AsyncJob:
     )
 
 
-def run(
-    client: SegmindClient,
-    slug: str,
-    *,
-    timeout: float = DEFAULT_POLL_TIMEOUT_S,
-    interval: float = DEFAULT_POLL_INTERVAL_S,
-    **params,
-) -> dict[str, Any]:
-    """One-shot convenience: submit and wait. Equivalent to
-    `client.submit_async(slug, **params).wait(timeout, interval)`.
+def run(client: SegmindClient, slug: str, **params) -> dict[str, Any]:
+    """One-shot convenience: submit and wait with the default poll cadence.
+    Equivalent to `client.submit_async(slug, **params).wait()`.
+
+    `timeout`/`interval` are deliberately NOT accepted here so that **every**
+    keyword is forwarded to the model body — a model param named `timeout` or
+    `interval` would otherwise be shadowed by a control kwarg (SEG-339). For a
+    custom deadline/cadence, use `submit(...).wait(timeout=..., interval=...)`.
     """
-    job = submit(client, slug, **params)
-    return job.wait(timeout=timeout, interval=interval)
+    return submit(client, slug, **params).wait()
 
 
 def _v2_base(client: SegmindClient) -> str:

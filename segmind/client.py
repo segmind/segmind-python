@@ -43,9 +43,15 @@ class SegmindClient:
         Returns:
             Configured httpx.Client instance
         """
+        # Local import avoids a load-time circular import (segmind/__init__.py
+        # imports this module before it defines __version__); _build_client only
+        # runs at instantiation, by which point __version__ is available.
+        from segmind import __version__
+
         headers = {
             # "Content-Type": "application/json",
-            "User-Agent": "segmind-python-sdk/0.1.0",
+            # SEG-338: single source of truth — UA version tracks __version__.
+            "User-Agent": f"segmind-python-sdk/{__version__}",
             # SEG-319: identifies SDK traffic in spotdb. Heimdall passes
             # X-Initiator through verbatim on sync (-> "SDK-PY") and suffixes
             # "-V2" on the v2-async path (-> "SDK-PY-V2"). Must match the
@@ -94,28 +100,25 @@ class SegmindClient:
         """
         return _v2.submit(self, slug, **params)
 
-    def run_async(
-        self,
-        slug: str,
-        *,
-        timeout: float = _v2.DEFAULT_POLL_TIMEOUT_S,
-        interval: float = _v2.DEFAULT_POLL_INTERVAL_S,
-        **params,
-    ) -> dict:
-        """One-shot v2 async inference: submit + wait. Returns the final
-        response body (the same dict you'd get from polling to COMPLETED).
+    def run_async(self, slug: str, **params) -> dict:
+        """One-shot v2 async inference: submit + wait with the default poll
+        cadence (600s deadline, 1.0s interval). Returns the final response body
+        (the same dict you'd get from polling to COMPLETED).
+
+        All ``params`` are forwarded to the model — including any field named
+        ``timeout`` or ``interval``. For a custom deadline/cadence, use
+        ``submit_async`` + ``job.wait(timeout=..., interval=...)`` instead.
 
         Args:
             slug: Model slug/identifier.
-            timeout: Hard deadline in seconds (default 600s).
-            interval: Status-poll cadence (default 1.0s).
             **params: Parameters to pass to the model.
 
         Raises:
             v2.InferenceFailed: server returned FAILED.
-            v2.InferenceTimeout: timeout elapsed before terminal state.
+            v2.InferenceTimeout: the default timeout elapsed before a terminal
+                state — for slower models, use ``submit_async`` + ``job.wait()``.
         """
-        return _v2.run(self, slug, timeout=timeout, interval=interval, **params)
+        return _v2.run(self, slug, **params)
 
     def stream(self, slug: str, **params) -> httpx.Response:
         """Stream a model inference request (not implemented).

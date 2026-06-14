@@ -12,9 +12,9 @@ Usage:
         f.write(response.content)
 
     # Run a model (v2 async — submit + poll until done)
-    result = segmind.run_async("seedance-1-pro", prompt="A sunset", timeout=300)
+    result = segmind.run_async("seedance-1-pro", prompt="A sunset")
 
-    # Or split the submit / wait for finer control
+    # Or split the submit / wait for finer control (custom deadline/cadence)
     job = segmind.submit_async("seedance-1-pro", prompt="A sunset")
     print(job.request_id)
     result = job.wait(timeout=300)
@@ -30,6 +30,7 @@ Usage:
 from typing import Optional
 
 from segmind.client import SegmindClient
+from segmind.exceptions import SegmindError
 from segmind.v2 import (
     DEFAULT_POLL_INTERVAL_S,
     DEFAULT_POLL_TIMEOUT_S,
@@ -38,7 +39,7 @@ from segmind.v2 import (
     InferenceTimeout,
 )
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 # Default client (lazily initialized)
 _default_client: Optional[SegmindClient] = None
@@ -91,19 +92,16 @@ def submit_async(slug: str, **params) -> AsyncJob:
     return _get_client().submit_async(slug, **params)
 
 
-def run_async(
-    slug: str,
-    *,
-    timeout: float = DEFAULT_POLL_TIMEOUT_S,
-    interval: float = DEFAULT_POLL_INTERVAL_S,
-    **params,
-) -> dict:
+def run_async(slug: str, **params) -> dict:
     """Run a v2 async inference request to completion (submit + poll).
+
+    Forwards **all** ``params`` to the model — including any field literally
+    named ``timeout`` or ``interval`` — and polls with the default cadence
+    (600s deadline, 1.0s interval). For a custom deadline/cadence, use
+    ``submit_async`` + the job's ``wait(timeout=..., interval=...)``.
 
     Args:
         slug: Model slug/identifier.
-        timeout: Hard deadline in seconds (default 600s).
-        interval: Status-poll cadence (default 1.0s).
         **params: Parameters to pass to the model.
 
     Returns:
@@ -111,13 +109,14 @@ def run_async(
 
     Raises:
         segmind.InferenceFailed: server returned FAILED.
-        segmind.InferenceTimeout: timeout elapsed before terminal state.
+        segmind.InferenceTimeout: the default timeout elapsed before a terminal
+            state — for slower models, use ``submit_async`` + ``job.wait()``.
 
     Example:
         import segmind
-        result = segmind.run_async("seedance-1-pro", prompt="A sunset", timeout=300)
+        result = segmind.run_async("seedance-1-pro", prompt="A sunset")
     """
-    return _get_client().run_async(slug, timeout=timeout, interval=interval, **params)
+    return _get_client().run_async(slug, **params)
 
 
 # Namespace proxies
@@ -193,6 +192,7 @@ __all__ = [
     "InferenceFailed",
     "InferenceTimeout",
     "SegmindClient",
+    "SegmindError",
     "files",
     "generations",
     "models",

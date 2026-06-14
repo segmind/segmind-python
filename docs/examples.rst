@@ -31,7 +31,7 @@ Text to Image
 .. code-block:: python
 
    # Generate an image from text
-   response = client.run(
+   response = client.run_sync(
        "seedream-v3-text-to-image",
        prompt="A beautiful raining sunrise over dark fiery mountains",
        aspect_ratio="16:9",
@@ -47,7 +47,7 @@ Music Generation
 .. code-block:: python
 
    # Generate music
-   response = client.run(
+   response = client.run_sync(
        "ace-step-music",
        genres="jazz",
        output_seconds=30,
@@ -69,7 +69,7 @@ Text-to-Speech
        "text": "Did you ever hear a folk tale about a giant turtle?",
        "speed": 1,
    }
-   response = client.run("myshell-tts", **input_data)
+   response = client.run_sync("myshell-tts", **input_data)
 
    # Save the audio
    with open("tts.mp3", "wb") as f:
@@ -87,8 +87,8 @@ LLM Chat
        {"role": "user", "content": "now a joke on dogs"},
    ]
 
-   response = client.run("qwen2p5-vl-32b-instruct", messages=messages)
-   print(response.content)
+   reply = client.chat("qwen2p5-vl-32b-instruct", messages=messages)
+   print(reply.text)
 
 .. _examples:webhooks:
 

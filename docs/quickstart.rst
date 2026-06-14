@@ -69,7 +69,7 @@ Let's start with a simple text-to-image generation:
    client = SegmindClient()
 
    # Generate an image
-   response = client.run(
+   response = client.run_sync(
        "seedream-v3-text-to-image",
        prompt="A cute cat sitting on a windowsill",
        aspect_ratio="1:1"
@@ -97,7 +97,7 @@ Common Use Cases
 **Text to Image**
 .. code-block:: python
 
-   response = client.run(
+   response = client.run_sync(
        "seedream-v3-text-to-image",
        prompt="A futuristic city skyline at night",
        aspect_ratio="16:9"
@@ -106,7 +106,7 @@ Common Use Cases
 **Music Generation**
 .. code-block:: python
 
-   response = client.run(
+   response = client.run_sync(
        "ace-step-music",
        genres="electronic",
        output_seconds=30
@@ -115,7 +115,7 @@ Common Use Cases
 **Text to Speech**
 .. code-block:: python
 
-   response = client.run(
+   response = client.run_sync(
        "myshell-tts",
        voice="michael",
        text="Hello, welcome to Segmind!",
@@ -129,8 +129,8 @@ Common Use Cases
        {"role": "user", "content": "What is artificial intelligence?"}
    ]
 
-   response = client.run("qwen2p5-vl-32b-instruct", messages=messages)
-   print(response.text)
+   reply = client.chat("qwen2p5-vl-32b-instruct", messages=messages)
+   print(reply.text)
 
 Need Help?
 ----------

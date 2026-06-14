@@ -15,8 +15,8 @@ export SEGMIND_API_KEY="your_api_key_here"
 ```python
 import segmind
 
-# Generate an image
-response = segmind.run(
+# Generate an image (sync — single blocking v1 call)
+response = segmind.run_sync(
     "seedream-v3-text-to-image",
     prompt="A beautiful sunset over mountains",
     aspect_ratio="16:9"
@@ -25,6 +25,20 @@ response = segmind.run(
 # Save the image
 with open("sunset2.jpg", "wb") as f:
     f.write(response.content)
+```
+
+> **⚠️ 1.1.0 breaking change — verbs were redefined.** `run` is now the
+> **async (v2, queue-backed)** path and returns a result `dict`; the old
+> synchronous behaviour moved to **`run_sync`** (returns an `httpx.Response`);
+> **`run_async` was removed** (use `run`). See [CHANGELOG.md](CHANGELOG.md).
+
+```python
+# Run async (v2 — submit + poll until done), returns a dict
+result = segmind.run("seedance-1-pro", prompt="A sunset")
+
+# For long / video models, submit and wait with a custom deadline
+job = segmind.submit_async("seedance-1-pro", prompt="A sunset")
+result = job.wait(timeout=900)
 ```
 
 ## Core Components
@@ -51,7 +65,7 @@ with open("sunset2.jpg", "wb") as f:
 ```python
 import segmind
 
-response = segmind.run(
+response = segmind.run_sync(
     "seedream-v3-text-to-image",
     prompt="A cyberpunk cityscape at night",
     aspect_ratio="16:9"
@@ -59,6 +73,29 @@ response = segmind.run(
 
 with open("image.jpg", "wb") as f:
     f.write(response.content)
+```
+
+### LLM Chat
+
+```python
+import segmind
+
+# Async by default; .text is normalized across OpenAI / Anthropic / Gemini
+reply = segmind.chat("gpt-5.5", prompt="Write a haiku about the sea")
+print(reply.text)
+print(reply.usage, reply.finish_reason)
+
+# Sync single call
+reply = segmind.chat_sync("claude-4.5-sonnet", messages=[
+    {"role": "user", "content": "Summarize the plot of Dune in one line"},
+])
+
+# Multimodal: image_url() inlines a local file as a base64 data-URI
+msg = {"role": "user", "content": [
+    {"type": "text", "text": "What's in this image?"},
+    segmind.image_url("cat.png"),
+]}
+reply = segmind.chat("gpt-5.5", messages=[msg])
 ```
 
 ### PixelFlows
@@ -169,7 +206,7 @@ import segmind
 from segmind.exceptions import SegmindError
 
 try:
-    response = segmind.run("invalid-model", prompt="test")
+    response = segmind.run_sync("invalid-model", prompt="test")
 except SegmindError as e:
     print(f"API Error: {e.detail}")
     print(f"Status Code: {e.status}")

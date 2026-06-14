@@ -43,7 +43,7 @@ Quick Start
    client = SegmindClient(api_key="your_api_key_here")
 
    # Generate an image
-   response = client.run(
+   response = client.run_sync(
        "seedream-v3-text-to-image",
        prompt="A beautiful sunset over mountains",
        aspect_ratio="16:9"

@@ -55,7 +55,7 @@ class TestCompleteWorkflows:
             mock_client.post.return_value = mock_response
 
             # Run the model
-            result = client.run(
+            result = client.run_sync(
                 "text-to-image-v1",
                 prompt="A beautiful sunset over mountains",
                 aspect_ratio="16:9",
@@ -111,7 +111,7 @@ class TestCompleteWorkflows:
             file_url = upload_result["url"]
 
             # Process the uploaded file
-            process_result = client.run(
+            process_result = client.run_sync(
                 "image-enhancement",
                 input_image=file_url,
                 enhancement_type="super_resolution"
@@ -343,7 +343,7 @@ class TestCompleteWorkflows:
 
             # Test error handling in model run
             with pytest.raises(httpx.HTTPStatusError) as exc_info:
-                client.run("text-to-image", prompt="test prompt")
+                client.run_sync("text-to-image", prompt="test prompt")
 
             assert exc_info.value.response.status_code == 429
 
@@ -372,7 +372,7 @@ class TestCompleteWorkflows:
                     # Simulate processing time
                     time.sleep(0.1)
 
-                    result = client.run(
+                    result = client.run_sync(
                         "fast-model",
                         prompt=f"Test prompt {worker_id}",
                         worker_id=worker_id
@@ -478,7 +478,7 @@ class TestCompleteWorkflows:
 
             results = []
             for i, prompt in enumerate(prompts):
-                result = client.run(
+                result = client.run_sync(
                     "text-to-image",
                     prompt=prompt,
                     batch_id=i

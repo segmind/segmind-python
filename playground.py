@@ -226,13 +226,15 @@ elif section == "Finetune":
                 st.code(url)
 
 elif section == "Run (Inference)":
-    st.header("client.run (Model Inference)")
+    st.header("client.run_sync (Model Inference)")
     slug = st.text_input("Model slug", value="seedream-v3-text-to-image")
     prompt = st.text_input("prompt", value="A beautiful sunset over mountains")
     aspect_ratio = st.text_input("aspect_ratio", value="16:9")
     if st.button("Run"):
         with st.spinner("Running model..."):
-            resp = client.run(slug, prompt=prompt, aspect_ratio=aspect_ratio)
+            # run_sync = single blocking v1 call returning an httpx.Response
+            # (`run` is now the async v2 path and returns a dict).
+            resp = client.run_sync(slug, prompt=prompt, aspect_ratio=aspect_ratio)
             # Try display as image; otherwise show text/json
             try:
                 st.image(io.BytesIO(resp.content))

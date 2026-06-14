@@ -72,7 +72,7 @@ class TestSegmindClient:
             mock_client_class.return_value = mock_client
 
             client = SegmindClient(api_key=mock_api_key)
-            response = client.run("test-model", prompt="Hello world")
+            response = client.run_sync("test-model", prompt="Hello world")
 
             assert response.status_code == 200
             assert response.json() == sample_generation_data
@@ -91,7 +91,7 @@ class TestSegmindClient:
 
             client = SegmindClient(api_key=mock_api_key)
             params = {"prompt": "Hello world", "max_tokens": 100, "temperature": 0.7}
-            response = client.run("test-model", **params)
+            response = client.run_sync("test-model", **params)
 
             assert response.status_code == 200
             mock_client.post.assert_called_once_with("/test-model", json=params)
@@ -113,17 +113,16 @@ class TestSegmindClient:
             client = SegmindClient(api_key=mock_api_key)
 
             with pytest.raises(SegmindError) as exc_info:
-                client.run("test-model", prompt="test")
+                client.run_sync("test-model", prompt="test")
 
             assert "400" in str(exc_info.value)
 
     def test_stream_method_not_implemented(self, mock_api_key):
-        """Test that stream method is not implemented."""
+        """Test that stream method raises NotImplementedError (SEG-344 A6)."""
         client = SegmindClient(api_key=mock_api_key)
 
-        # Currently returns None (not implemented)
-        result = client.stream("test-model", prompt="test")
-        assert result is None
+        with pytest.raises(NotImplementedError):
+            client.stream("test-model", prompt="test")
 
     def test_request_method_get(self, mock_api_key):
         """Test _request method with GET request."""
@@ -282,7 +281,7 @@ class TestClientAdvancedFeatures:
             mock_client_class.return_value = mock_client
 
             client = SegmindClient(api_key=mock_api_key)
-            response = client.run("test-model")
+            response = client.run_sync("test-model")
 
             assert response.status_code == 200
             mock_client.post.assert_called_once_with("/test-model", json={})
@@ -312,7 +311,7 @@ class TestClientAdvancedFeatures:
             mock_client_class.return_value = mock_client
 
             client = SegmindClient(api_key=mock_api_key)
-            response = client.run("complex-model", **complex_params)
+            response = client.run_sync("complex-model", **complex_params)
 
             assert response.status_code == 200
             mock_client.post.assert_called_once_with("/complex-model", json=complex_params)
@@ -340,7 +339,7 @@ class TestClientAdvancedFeatures:
             client = SegmindClient(api_key=mock_api_key)
 
             for model_name in model_names:
-                response = client.run(model_name, prompt="test")
+                response = client.run_sync(model_name, prompt="test")
                 assert response.status_code == 200
 
     def test_request_method_with_query_parameters(self, mock_api_key):
@@ -463,7 +462,7 @@ class TestClientAdvancedFeatures:
             client = SegmindClient(api_key=mock_api_key)
 
             with pytest.raises(httpx.NetworkError):
-                client.run("test-model", prompt="test")
+                client.run_sync("test-model", prompt="test")
 
     def test_error_propagation_in_request_method(self, mock_api_key):
         """Test that various errors are properly propagated in _request method."""
@@ -530,26 +529,24 @@ class TestClientAdvancedFeatures:
             ]
 
             for model_slug, expected_url in test_cases:
-                client.run(model_slug, prompt="test")
+                client.run_sync(model_slug, prompt="test")
                 call_args = mock_client.post.call_args
                 assert call_args[0][0] == expected_url
 
     def test_stream_method_current_implementation(self, mock_api_key):
-        """Test current implementation of stream method."""
+        """Stream raises NotImplementedError regardless of params (SEG-344 A6)."""
         client = SegmindClient(api_key=mock_api_key)
 
-        # Current implementation returns None
-        result = client.stream("test-model", prompt="test", stream=True)
-        assert result is None
+        with pytest.raises(NotImplementedError):
+            client.stream("test-model", prompt="test", stream=True)
 
-        # Test with various parameters
-        result = client.stream(
-            "complex-model",
-            prompt="test",
-            max_tokens=100,
-            temperature=0.7
-        )
-        assert result is None
+        with pytest.raises(NotImplementedError):
+            client.stream(
+                "complex-model",
+                prompt="test",
+                max_tokens=100,
+                temperature=0.7,
+            )
 
     def test_client_state_isolation(self, mock_api_key):
         """Test that multiple client instances are properly isolated."""

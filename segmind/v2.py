@@ -9,7 +9,7 @@ finishes. Clients poll `/v2/requests/{id}/status` until the task hits
 This module provides:
 
     client.submit_async(slug, **params) -> AsyncJob
-    client.run_async(slug, **params)    -> dict      # submit + wait
+    client.run(slug, **params)          -> dict      # submit + wait (async default)
     AsyncJob.wait(timeout, interval)    -> dict      # block to completion
 
 Defaults are 1.0s poll interval, 600s overall timeout. For slugs known to

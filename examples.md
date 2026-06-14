@@ -28,7 +28,7 @@ client = SegmindClient(timeout=120)
 import segmind
 
 # Generate an image from text
-response = segmind.run(
+response = segmind.run_sync(
     "seedream-v3-text-to-image",
     prompt="A beautiful raining sunrise over dark fiery mountains",
     aspect_ratio="16:9",
@@ -44,7 +44,7 @@ with open("sunrise.jpg", "wb") as f:
 import segmind
 
 # Generate music
-response = segmind.run(
+response = segmind.run_sync(
     "ace-step-music",
     genres="jazz",
     output_seconds=30,
@@ -60,7 +60,7 @@ with open("music.mp3", "wb") as f:
 import segmind
 
 # Convert text to speech
-response = segmind.run(
+response = segmind.run_sync(
     "myshell-tts",
     voice="michael",
     language="EN_NEWEST",
@@ -77,15 +77,27 @@ with open("tts.mp3", "wb") as f:
 ```python
 import segmind
 
-# Chat with a language model
+# Chat with a language model. `chat` is async by default (mirrors `run`);
+# `.text` is normalized across OpenAI / Anthropic / Gemini response shapes.
 messages = [
     {"role": "user", "content": "tell me a joke on cats"},
     {"role": "assistant", "content": "here is a joke about cats..."},
     {"role": "user", "content": "now a joke on dogs"},
 ]
 
-response = segmind.run("qwen2p5-vl-32b-instruct", messages=messages)
-print(response.content)
+reply = segmind.chat("qwen2p5-vl-32b-instruct", messages=messages)
+print(reply.text)
+print(reply.usage, reply.finish_reason)
+
+# Single blocking call instead of the async path:
+reply = segmind.chat_sync("qwen2p5-vl-32b-instruct", prompt="tell me a joke on cats")
+
+# Multimodal: inline a local image as a base64 data-URI
+msg = {"role": "user", "content": [
+    {"type": "text", "text": "Describe this image"},
+    segmind.image_url("photo.jpg"),
+]}
+reply = segmind.chat("qwen2p5-vl-32b-instruct", messages=[msg])
 ```
 
 ## Webhooks
@@ -182,12 +194,12 @@ import segmind
 
 # Upload an image and use it with a model
 upload_result = segmind.files.upload("input_image.jpg")
-image_url = upload_result["file_urls"][0]
+uploaded_url = upload_result["file_urls"][0]
 
 # Use the URL in a model request
-response = segmind.run(
+response = segmind.run_sync(
     "seededit-v3",
-    image=image_url,
+    image=uploaded_url,
     prompt="Add a sunset background"
 )
 ```
@@ -344,8 +356,8 @@ from segmind import SegmindClient
 # Custom client with longer timeout
 client = SegmindClient(api_key="your_api_key", timeout=120.0)
 
-# Run model
-response = client.run("seedream-v3-text-to-image", prompt="A sunset")
+# Run model (sync single call)
+response = client.run_sync("seedream-v3-text-to-image", prompt="A sunset")
 
 # Access namespaces
 result = client.files.upload("image.png")

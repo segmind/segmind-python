@@ -6,18 +6,22 @@ PixelFlows, webhooks, file uploads, and more.
 Usage:
     import segmind
 
-    # Run a model (sync v1)
-    response = segmind.run("seedream-v3-text-to-image", prompt="A sunset")
+    # Run a model (v2 async by default — submit + poll until done)
+    result = segmind.run("seedance-1-pro", prompt="A sunset")
+
+    # Run a model synchronously (single blocking v1 call)
+    response = segmind.run_sync("seedream-v3-text-to-image", prompt="A sunset")
     with open("image.jpg", "wb") as f:
         f.write(response.content)
-
-    # Run a model (v2 async — submit + poll until done)
-    result = segmind.run_async("seedance-1-pro", prompt="A sunset")
 
     # Or split the submit / wait for finer control (custom deadline/cadence)
     job = segmind.submit_async("seedance-1-pro", prompt="A sunset")
     print(job.request_id)
     result = job.wait(timeout=300)
+
+    # Chat with an LLM (async by default) — normalized .text across providers
+    reply = segmind.chat("gpt-5.5", prompt="Write a haiku about the sea")
+    print(reply.text)
 
     # Upload files
     result = segmind.files.upload("image.png")
@@ -25,10 +29,14 @@ Usage:
 
     # Run PixelFlows
     result = segmind.pixelflows.run(workflow_id="...", data={...})
+
+Note (1.1.0, BREAKING): `run` is now async (v2); the old synchronous `run`
+is `run_sync`; `run_async` has been removed (use `run`).
 """
 
 from typing import Optional
 
+from segmind.chat import AsyncChatJob, ChatResponse, image_url
 from segmind.client import SegmindClient
 from segmind.exceptions import SegmindError
 from segmind.v2 import (
@@ -53,8 +61,33 @@ def _get_client() -> SegmindClient:
     return _default_client
 
 
-def run(slug: str, **params):
-    """Run a sync (v1) model inference request.
+def run(slug: str, **params) -> dict:
+    """Run a model inference request — **async (v2) by default** (since 1.1.0).
+
+    Submits to `/v2`, polls until COMPLETED, and returns the final response
+    body. For a single blocking v1 call use `run_sync`. For long/video models
+    that can exceed the default 600s deadline, use `submit_async` +
+    `job.wait(timeout=...)`.
+
+    Args:
+        slug: Model slug/identifier
+        **params: Parameters to pass to the model (forwarded verbatim, incl.
+            any field named `timeout`/`interval` — SEG-339).
+
+    Returns:
+        The final response body once the task reaches COMPLETED.
+
+    Example:
+        import segmind
+        result = segmind.run("seedance-1-pro", prompt="A sunset")
+    """
+    return _get_client().run(slug, **params)
+
+
+def run_sync(slug: str, **params):
+    """Run a synchronous (v1) model inference request — single blocking call.
+
+    This is the pre-1.1.0 `run` behaviour: returns the raw `httpx.Response`.
 
     Args:
         slug: Model slug/identifier
@@ -65,11 +98,11 @@ def run(slug: str, **params):
 
     Example:
         import segmind
-        response = segmind.run("seedream-v3-text-to-image", prompt="A sunset")
+        response = segmind.run_sync("seedream-v3-text-to-image", prompt="A sunset")
         with open("image.jpg", "wb") as f:
             f.write(response.content)
     """
-    return _get_client().run(slug, **params)
+    return _get_client().run_sync(slug, **params)
 
 
 def submit_async(slug: str, **params) -> AsyncJob:
@@ -92,31 +125,34 @@ def submit_async(slug: str, **params) -> AsyncJob:
     return _get_client().submit_async(slug, **params)
 
 
-def run_async(slug: str, **params) -> dict:
-    """Run a v2 async inference request to completion (submit + poll).
+def chat(slug: str, **kwargs) -> ChatResponse:
+    """LLM chat — **async (v2) by default**, returns a normalized `ChatResponse`.
 
-    Forwards **all** ``params`` to the model — including any field literally
-    named ``timeout`` or ``interval`` — and polls with the default cadence
-    (600s deadline, 1.0s interval). For a custom deadline/cadence, use
-    ``submit_async`` + the job's ``wait(timeout=..., interval=...)``.
-
-    Args:
-        slug: Model slug/identifier.
-        **params: Parameters to pass to the model.
-
-    Returns:
-        The final response body once the task reaches COMPLETED.
-
-    Raises:
-        segmind.InferenceFailed: server returned FAILED.
-        segmind.InferenceTimeout: the default timeout elapsed before a terminal
-            state — for slower models, use ``submit_async`` + ``job.wait()``.
+    Pass either ``messages=[...]`` or ``prompt=...`` plus any model opts. The
+    returned `ChatResponse.text` is provider-normalized (OpenAI / Anthropic /
+    Gemini). For a single blocking v1 call use `chat_sync`; for a handle use
+    `submit_chat`.
 
     Example:
         import segmind
-        result = segmind.run_async("seedance-1-pro", prompt="A sunset")
+        reply = segmind.chat("gpt-5.5", prompt="Write a haiku about the sea")
+        print(reply.text)
     """
-    return _get_client().run_async(slug, **params)
+    return _get_client().chat(slug, **kwargs)
+
+
+def chat_sync(slug: str, **kwargs) -> ChatResponse:
+    """LLM chat — synchronous single `POST /v1/{slug}` → `ChatResponse`."""
+    return _get_client().chat_sync(slug, **kwargs)
+
+
+def submit_chat(slug: str, **kwargs) -> AsyncChatJob:
+    """Submit an async (v2) chat request; return an `AsyncChatJob` handle.
+
+    The handle exposes `.wait()` / `.status()` / `.result()` returning a
+    normalized `ChatResponse`, plus `.request_id`.
+    """
+    return _get_client().submit_chat(slug, **kwargs)
 
 
 # Namespace proxies
@@ -188,17 +224,23 @@ generations = _Generations()
 __all__ = [
     "DEFAULT_POLL_INTERVAL_S",
     "DEFAULT_POLL_TIMEOUT_S",
+    "AsyncChatJob",
     "AsyncJob",
+    "ChatResponse",
     "InferenceFailed",
     "InferenceTimeout",
     "SegmindClient",
     "SegmindError",
+    "chat",
+    "chat_sync",
     "files",
     "generations",
+    "image_url",
     "models",
     "pixelflows",
     "run",
-    "run_async",
+    "run_sync",
     "submit_async",
+    "submit_chat",
     "webhooks",
 ]

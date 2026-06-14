@@ -3,6 +3,7 @@ from typing import Optional
 
 import httpx
 
+from segmind import chat as _chat
 from segmind import v2 as _v2
 from segmind.accounts import Accounts
 from segmind.exceptions import raise_for_status
@@ -67,8 +68,40 @@ class SegmindClient:
             base_url=self.base_url,
         )
 
-    def run(self, slug: str, **params) -> httpx.Response:
-        """Run a model inference request.
+    def run(self, slug: str, **params) -> dict:
+        """Run a model inference request — **async (v2) by default**.
+
+        Since 1.1.0 `run` is the v2 queue-backed path: it submits to `/v2`,
+        polls until the task is COMPLETED, and returns the final response body
+        (the same dict you'd get from `submit_async(...).wait()`). For a single
+        blocking v1 call use `run_sync`.
+
+        All ``params`` are forwarded to the model — including any field named
+        ``timeout`` or ``interval`` (SEG-339). For a custom deadline/cadence,
+        use ``submit_async`` + ``job.wait(timeout=..., interval=...)``; this is
+        also the documented path for long/video models that can exceed the
+        default 600s deadline.
+
+        Args:
+            slug: Model slug/identifier.
+            **params: Parameters to pass to the model.
+
+        Returns:
+            The final response body once the task reaches COMPLETED.
+
+        Raises:
+            v2.InferenceFailed: server returned FAILED.
+            v2.InferenceTimeout: the default 600s timeout elapsed before a
+                terminal state — for slower models use ``submit_async``.
+        """
+        return _v2.run(self, slug, **params)
+
+    def run_sync(self, slug: str, **params) -> httpx.Response:
+        """Run a synchronous (v1) model inference request — single blocking call.
+
+        This is the pre-1.1.0 `run` behaviour: one `POST /v1/{slug}` that
+        blocks until the model responds, returning the raw `httpx.Response`
+        (use `.content` for bytes, `.json()` for JSON models).
 
         Args:
             slug: Model slug/identifier
@@ -78,7 +111,7 @@ class SegmindClient:
             HTTP response from the API
 
         Raises:
-            HTTPError: If the request fails
+            SegmindError: If the request fails
         """
         response = self._client.post(f"/{slug}", json=params)
         raise_for_status(response)
@@ -100,37 +133,38 @@ class SegmindClient:
         """
         return _v2.submit(self, slug, **params)
 
-    def run_async(self, slug: str, **params) -> dict:
-        """One-shot v2 async inference: submit + wait with the default poll
-        cadence (600s deadline, 1.0s interval). Returns the final response body
-        (the same dict you'd get from polling to COMPLETED).
+    def chat(self, slug: str, **kwargs) -> "_chat.ChatResponse":
+        """LLM chat — **async (v2) by default**, mirrors `run`.
 
-        All ``params`` are forwarded to the model — including any field named
-        ``timeout`` or ``interval``. For a custom deadline/cadence, use
-        ``submit_async`` + ``job.wait(timeout=..., interval=...)`` instead.
+        Submits to `/v2`, waits, and returns a provider-normalized
+        `ChatResponse` (`.text` works across OpenAI / Anthropic / Gemini
+        shapes). Pass either ``messages=[...]`` or ``prompt=...`` plus any
+        model opts (`temperature`, `instruction`, `image`, …). For a single
+        blocking v1 call use `chat_sync`; for a handle use `submit_chat`.
+        """
+        return _chat.chat(self, slug, **kwargs)
 
-        Args:
-            slug: Model slug/identifier.
-            **params: Parameters to pass to the model.
+    def chat_sync(self, slug: str, **kwargs) -> "_chat.ChatResponse":
+        """LLM chat — synchronous single `POST /v1/{slug}` → `ChatResponse`."""
+        return _chat.chat_sync(self, slug, **kwargs)
+
+    def submit_chat(self, slug: str, **kwargs) -> "_chat.AsyncChatJob":
+        """Submit an async (v2) chat request; return an `AsyncChatJob` handle.
+
+        The handle exposes `.wait()` / `.status()` / `.result()` returning a
+        normalized `ChatResponse`, plus `.request_id`.
+        """
+        return _chat.submit_chat(self, slug, **kwargs)
+
+    def stream(self, slug: str, **params):
+        """Token streaming (not yet supported by the Segmind gateway).
 
         Raises:
-            v2.InferenceFailed: server returned FAILED.
-            v2.InferenceTimeout: the default timeout elapsed before a terminal
-                state — for slower models, use ``submit_async`` + ``job.wait()``.
+            NotImplementedError: always — the gateway has no SSE path yet.
         """
-        return _v2.run(self, slug, **params)
-
-    def stream(self, slug: str, **params) -> httpx.Response:
-        """Stream a model inference request (not implemented).
-
-        Args:
-            slug: Model slug/identifier
-            **params: Parameters to pass to the model
-
-        Returns:
-            HTTP response from the API
-        """
-        pass
+        raise NotImplementedError(
+            "token streaming is not yet supported by the Segmind gateway"
+        )
 
     def _request(self, method: str, path: str, **kwargs) -> httpx.Response:
         """Make an HTTP request.

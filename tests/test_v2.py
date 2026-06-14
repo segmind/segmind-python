@@ -209,11 +209,12 @@ def test_wait_raises_inference_timeout(client):
     assert exc.value.elapsed_s == pytest.approx(0.05, rel=0.5)
 
 
-# ---- run_async one-shot ----------------------------------------------------
+# ---- run (async default, since 1.1.0 / SEG-354) ----------------------------
 
 
 @respx.mock
-def test_run_async_one_shot(client):
+def test_run_one_shot(client):
+    """SEG-354: `run` is the v2 async one-shot (was `run_async`)."""
     respx.post(f"{API_HOST}/v2/{SLUG}").mock(return_value=httpx.Response(200, json=SUBMIT_BODY))
     respx.get(f"{API_HOST}/v2/requests/{REQ_ID}/status").mock(
         return_value=httpx.Response(200, json={"status": "COMPLETED"})
@@ -222,16 +223,16 @@ def test_run_async_one_shot(client):
         return_value=httpx.Response(200, json=RESULT_BODY)
     )
 
-    out = client.run_async(SLUG, sleep=1, credits=1e-6)
+    out = client.run(SLUG, sleep=1, credits=1e-6)
 
     assert out == RESULT_BODY
 
 
 @respx.mock
-def test_run_async_forwards_reserved_named_params_to_body(client):
-    """SEG-339: run_async takes no timeout/interval control kwargs, so a model
-    param literally named `interval` (or `timeout`) is forwarded to the request
-    body instead of being shadowed. Regression for the flux-pro `interval` clash.
+def test_run_forwards_reserved_named_params_to_body(client):
+    """SEG-339: `run` (async) takes no timeout/interval control kwargs, so a
+    model param literally named `interval` (or `timeout`) is forwarded to the
+    request body instead of being shadowed. Regression for the flux-pro clash.
     """
     route = respx.post(f"{API_HOST}/v2/{SLUG}").mock(
         return_value=httpx.Response(200, json=SUBMIT_BODY)
@@ -243,13 +244,37 @@ def test_run_async_forwards_reserved_named_params_to_body(client):
         return_value=httpx.Response(200, json=RESULT_BODY)
     )
 
-    out = client.run_async(SLUG, prompt="hi", interval=4, timeout=7)
+    out = client.run(SLUG, prompt="hi", interval=4, timeout=7)
 
     assert out == RESULT_BODY
     import json
 
     sent = json.loads(route.calls.last.request.content)
     assert sent == {"prompt": "hi", "interval": 4, "timeout": 7}
+
+
+@respx.mock
+def test_run_sync_hits_v1_returns_response(client):
+    """SEG-354: `run_sync` is the single blocking v1 call (was `run`),
+    returning the raw httpx.Response — and must NOT touch the v2 path."""
+    v1 = respx.post(f"{API_HOST}/v1/{SLUG}").mock(
+        return_value=httpx.Response(200, json={"ok": True})
+    )
+    v2 = respx.post(f"{API_HOST}/v2/{SLUG}").mock(
+        return_value=httpx.Response(200, json=SUBMIT_BODY)
+    )
+
+    resp = client.run_sync(SLUG, prompt="hi")
+
+    assert resp.status_code == 200
+    assert resp.json() == {"ok": True}
+    assert v1.called and not v2.called
+
+
+def test_run_async_removed(client):
+    """SEG-354: `run_async` is gone (no alias) on both client and module."""
+    assert not hasattr(client, "run_async")
+    assert not hasattr(segmind, "run_async")
 
 
 # ---- staging base_url derivation -------------------------------------------
@@ -280,7 +305,7 @@ def test_v2_url_derives_from_staging_base():
 
 
 @respx.mock
-def test_module_level_run_async_uses_default_client():
+def test_module_level_run_uses_default_client():
     respx.post(f"{API_HOST}/v2/{SLUG}").mock(return_value=httpx.Response(200, json=SUBMIT_BODY))
     respx.get(f"{API_HOST}/v2/requests/{REQ_ID}/status").mock(
         return_value=httpx.Response(200, json={"status": "COMPLETED"})
@@ -292,7 +317,7 @@ def test_module_level_run_async_uses_default_client():
     with patch.dict(os.environ, {"SEGMIND_API_KEY": "sk-test"}):
         # Reset the cached default client so it picks up the env var.
         segmind._default_client = None
-        out = segmind.run_async(SLUG, sleep=1)
+        out = segmind.run(SLUG, sleep=1)
 
     assert out == RESULT_BODY
 
@@ -302,12 +327,17 @@ def test_module_level_run_async_uses_default_client():
 
 def test_module_exports_v2_symbols():
     assert hasattr(segmind, "submit_async")
-    assert hasattr(segmind, "run_async")
+    assert hasattr(segmind, "run")
+    assert hasattr(segmind, "run_sync")
     assert hasattr(segmind, "AsyncJob")
     assert hasattr(segmind, "InferenceFailed")
     assert hasattr(segmind, "InferenceTimeout")
     assert "submit_async" in segmind.__all__
-    assert "run_async" in segmind.__all__
+    assert "run" in segmind.__all__
+    assert "run_sync" in segmind.__all__
+    # SEG-354: run_async is removed, no alias.
+    assert "run_async" not in segmind.__all__
+    assert not hasattr(segmind, "run_async")
 
 
 def test_segmind_error_exported_at_top_level():

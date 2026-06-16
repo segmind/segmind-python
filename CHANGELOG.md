@@ -8,6 +8,9 @@ This release redefines the inference verbs to make **async the default** and
 adds a normalized **LLM chat** surface. Adoption was effectively zero, so the
 verb flip ships without a deprecation cycle.
 
+> 📖 **Docs:** [Python SDK guide](https://docs.segmind.com/docs/sdks/python) ·
+> [v2 async API reference](https://docs.segmind.com/docs/serverless-api/async-inference)
+
 ### Breaking — verb redefinition (SEG-354)
 
 | Verb | 1.1.0 behavior | Was (≤1.0.x) |

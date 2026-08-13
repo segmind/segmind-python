@@ -26,6 +26,7 @@ class Generations(Namespace):
         model_name: Optional[str] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
+        user_id: Optional[str] = None,
     ) -> dict[str, Any]:
         """Get generations with pagination and filtering.
 
@@ -34,6 +35,9 @@ class Generations(Namespace):
             model_name: Name of the model to filter by (optional)
             start_date: Start date filter in YYYY-MM-DD format (optional)
             end_date: End date filter in YYYY-MM-DD format (optional)
+            user_id: UUID of the user whose generations to return (optional).
+                When acting inside a team, this may be any member of that team;
+                otherwise it may only be your own user id.
 
         Returns:
             Dictionary containing generations list response
@@ -46,6 +50,8 @@ class Generations(Namespace):
             params["start_date"] = start_date
         if end_date:
             params["end_date"] = end_date
+        if user_id:
+            params["user_id"] = user_id
 
         url = "https://api.spotprod.segmind.com/inference-request/generations"
         response = self._client._request("GET", url, params=params)

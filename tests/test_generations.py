@@ -70,6 +70,34 @@ class TestGenerations:
             params={"page": 2, "model_name": "test-model", "start_date": "2024-01-01"},
         )
 
+    def test_generations_list_with_user_id(self):
+        """Test that generations.list() forwards the user_id filter."""
+        mock_client = mock.MagicMock()
+        mock_response = mock.MagicMock()
+        mock_response.json.return_value = {"generations": []}
+        mock_client._request.return_value = mock_response
+
+        generations = Generations(mock_client)
+        generations.list(user_id="8f14e45f-ceea-467a-9575-6b0d2a4ba8b1")
+
+        mock_client._request.assert_called_once_with(
+            "GET",
+            "https://api.spotprod.segmind.com/inference-request/generations",
+            params={"page": 1, "user_id": "8f14e45f-ceea-467a-9575-6b0d2a4ba8b1"},
+        )
+
+    def test_generations_list_omits_unset_user_id(self):
+        """Test that an unset user_id is not sent as a query param."""
+        mock_client = mock.MagicMock()
+        mock_response = mock.MagicMock()
+        mock_response.json.return_value = {"generations": []}
+        mock_client._request.return_value = mock_response
+
+        generations = Generations(mock_client)
+        generations.list(page=3, user_id=None)
+
+        assert "user_id" not in mock_client._request.call_args.kwargs["params"]
+
     def test_generations_recent_success(self):
         """Test successful recent generations retrieval."""
         mock_client = mock.MagicMock()

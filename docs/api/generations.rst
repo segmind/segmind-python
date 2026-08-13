@@ -25,6 +25,9 @@ The :meth:`Generations.list` method supports several filtering options:
 * **model_name** - Filter by specific model
 * **start_date** - Filter by start date (YYYY-MM-DD format)
 * **end_date** - Filter by end date (YYYY-MM-DD format)
+* **user_id** - Filter by the user who made the generation (UUID). Inside a team,
+  any member of that team may be requested; otherwise only your own user id is
+  accepted.
 
 Generation Data
 ---------------

@@ -2,6 +2,15 @@
 
 All notable changes to the Segmind Python SDK are documented here.
 
+## Unreleased
+
+### Added
+
+- `generations.list(user_id=...)` — filter generation history by the user who
+  made the request. Inside a team, any member of that team may be requested;
+  outside one, only your own user id is accepted. Rows now also carry `user_id`
+  and `user_email`.
+
 ## 1.1.0 — ⚠️ BREAKING
 
 This release redefines the inference verbs to make **async the default** and

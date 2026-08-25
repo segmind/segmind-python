@@ -18,8 +18,8 @@ Welcome to Segmind Python SDK Documentation
    :target: https://pypi.org/project/segmind/
    :alt: Python versions
 
-.. image:: https://img.shields.io/github/license/segmind/segmind.svg
-   :target: https://github.com/segmind/segmind/blob/main/LICENSE
+.. image:: https://img.shields.io/github/license/segmind/segmind-python.svg
+   :target: https://github.com/segmind/segmind-python/blob/main/LICENSE
    :alt: License
 
 The Segmind Python SDK provides a simple and intuitive interface to interact with Segmind's AI models and services. With this SDK, you can:
@@ -37,21 +37,16 @@ Quick Start
 
 .. code-block:: python
 
-   from segmind import SegmindClient
+   import segmind  # reads SEGMIND_API_KEY from the environment
 
-   # Initialize the client
-   client = SegmindClient(api_key="your_api_key_here")
-
-   # Generate an image
-   response = client.run_sync(
-       "seedream-v3-text-to-image",
+   # Run a model (async v2 by default — submit + poll until done)
+   result = segmind.run(
+       "seedream-4.5",
        prompt="A beautiful sunset over mountains",
        aspect_ratio="16:9"
    )
-
-   # Save the result
-   with open("sunset.jpg", "wb") as f:
-       f.write(response.content)
+   print(result["output"])
+   # https://images.segmind.com/generations/...jpeg
 
 Installation
 ------------

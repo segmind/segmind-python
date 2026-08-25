@@ -13,18 +13,16 @@ export SEGMIND_API_KEY="your_api_key_here"
 ## Quick Start
 
 ```python
-import segmind
+import segmind  # reads SEGMIND_API_KEY from the environment
 
-# Generate an image (sync — single blocking v1 call)
-response = segmind.run_sync(
-    "seedream-v3-text-to-image",
+# Run a model (async v2 by default — submit + poll until done), returns a dict
+result = segmind.run(
+    "seedream-4.5",
     prompt="A beautiful sunset over mountains",
     aspect_ratio="16:9"
 )
-
-# Save the image
-with open("sunset2.jpg", "wb") as f:
-    f.write(response.content)
+print(result["output"])
+# https://images.segmind.com/generations/...jpeg
 ```
 
 > **⚠️ 1.1.0 breaking change — verbs were redefined.** `run` is now the
@@ -33,11 +31,13 @@ with open("sunset2.jpg", "wb") as f:
 > **`run_async` was removed** (use `run`). See [CHANGELOG.md](CHANGELOG.md).
 
 ```python
-# Run async (v2 — submit + poll until done), returns a dict
-result = segmind.run("seedance-1-pro", prompt="A sunset")
+# Sync alternative (single blocking v1 call) — raw bytes on the response
+response = segmind.run_sync("seedream-4.5", prompt="A sunset")
+with open("sunset.jpg", "wb") as f:
+    f.write(response.content)
 
 # For long / video models, submit and wait with a custom deadline
-job = segmind.submit_async("seedance-1-pro", prompt="A sunset")
+job = segmind.submit_async("seedance-2.0", prompt="A sunset")
 result = job.wait(timeout=900)
 ```
 
@@ -65,12 +65,19 @@ result = job.wait(timeout=900)
 ```python
 import segmind
 
-response = segmind.run_sync(
-    "seedream-v3-text-to-image",
+result = segmind.run(
+    "seedream-4.5",
     prompt="A cyberpunk cityscape at night",
     aspect_ratio="16:9"
 )
+print(result["output"])
 
+# Or get the raw bytes with a single blocking call:
+response = segmind.run_sync(
+    "seedream-4.5",
+    prompt="A cyberpunk cityscape at night",
+    aspect_ratio="16:9"
+)
 with open("image.jpg", "wb") as f:
     f.write(response.content)
 ```

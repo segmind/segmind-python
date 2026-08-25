@@ -7,15 +7,15 @@ Usage:
     import segmind
 
     # Run a model (v2 async by default — submit + poll until done)
-    result = segmind.run("seedance-1-pro", prompt="A sunset")
+    result = segmind.run("seedance-2.0", prompt="A sunset")
 
     # Run a model synchronously (single blocking v1 call)
-    response = segmind.run_sync("seedream-v3-text-to-image", prompt="A sunset")
+    response = segmind.run_sync("seedream-4.5", prompt="A sunset")
     with open("image.jpg", "wb") as f:
         f.write(response.content)
 
     # Or split the submit / wait for finer control (custom deadline/cadence)
-    job = segmind.submit_async("seedance-1-pro", prompt="A sunset")
+    job = segmind.submit_async("seedance-2.0", prompt="A sunset")
     print(job.request_id)
     result = job.wait(timeout=300)
 
@@ -79,7 +79,7 @@ def run(slug: str, **params) -> dict:
 
     Example:
         import segmind
-        result = segmind.run("seedance-1-pro", prompt="A sunset")
+        result = segmind.run("seedance-2.0", prompt="A sunset")
     """
     return _get_client().run(slug, **params)
 
@@ -98,7 +98,7 @@ def run_sync(slug: str, **params):
 
     Example:
         import segmind
-        response = segmind.run_sync("seedream-v3-text-to-image", prompt="A sunset")
+        response = segmind.run_sync("seedream-4.5", prompt="A sunset")
         with open("image.jpg", "wb") as f:
             f.write(response.content)
     """
@@ -118,7 +118,7 @@ def submit_async(slug: str, **params) -> AsyncJob:
 
     Example:
         import segmind
-        job = segmind.submit_async("seedance-1-pro", prompt="A sunset")
+        job = segmind.submit_async("seedance-2.0", prompt="A sunset")
         print(job.request_id)
         result = job.wait(timeout=300)
     """

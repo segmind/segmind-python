@@ -10,5 +10,7 @@
     "run_async() was removed in v1.1.0 — use run() instead.",
     "Authenticate by setting the SEGMIND_API_KEY environment variable, or pass api_key to SegmindClient.",
     "For long-running video models, use segmind.submit_async(...) then job.wait(timeout=...) instead of run()."
-  ]
+  ],
+  "url": "https://context7.com/segmind/segmind-python",
+  "public_key": "pk_9QDZWKEDX72DNkvEWDuyw"
 }

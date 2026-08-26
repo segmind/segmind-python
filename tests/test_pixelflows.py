@@ -22,10 +22,7 @@ class TestPixelFlows:
     @pytest.fixture
     def pixelflows(self, mock_client):
         """Create a PixelFlows instance with mock client."""
-        pf = PixelFlows(client=mock_client)
-        pf._client = mock_client
-        pf.client = mock_client
-        return pf
+        return PixelFlows(client=mock_client)
 
     # ==================== Test run() method ====================
 
@@ -276,8 +273,6 @@ class TestPixelFlows:
         }
         mock_client._request.return_value = response
 
-        # Mock the workflows_base property
-        pixelflows.workflows_base = "https://api.segmind.com/workflows"
 
         result = pixelflows.get_status(poll_id="req-status-123")
 
@@ -328,7 +323,6 @@ class TestPixelFlows:
         }
         mock_client._request.return_value = response
 
-        pixelflows.workflows_base = "https://api.segmind.com/workflows"
         result = pixelflows.get_status(poll_id="req-json-status")
 
         assert result["status"] == "COMPLETED"
@@ -354,7 +348,6 @@ class TestPixelFlows:
             poll_response_completed
         ]
 
-        pixelflows.workflows_base = "https://api.segmind.com/workflows"
         result = pixelflows.poll(poll_id="req-poll-123", poll_interval=0.1)
 
         assert result["status"] == "COMPLETED"
@@ -390,7 +383,6 @@ class TestPixelFlows:
         poll_response.json.return_value = {"status": "PROCESSING"}
 
         mock_client._request.return_value = poll_response
-        pixelflows.workflows_base = "https://api.segmind.com/workflows"
 
         result = pixelflows.poll(
             poll_id="req-timeout",
@@ -508,7 +500,6 @@ class TestPixelFlows:
         response.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
         mock_client._request.return_value = response
 
-        pixelflows.workflows_base = "https://api.segmind.com/workflows"
 
         with pytest.raises(json.JSONDecodeError):
             pixelflows.poll(poll_id="req-malformed")

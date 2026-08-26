@@ -9,6 +9,8 @@ from segmind.resource import Namespace
 class PixelFlows(Namespace):
     """Client for Segmind PixelFlows API with polling support."""
 
+    workflows_base = "https://api.segmind.com/workflows"
+
     def run(
         self,
         workflow_id: Optional[str] = None,
@@ -36,7 +38,7 @@ class PixelFlows(Namespace):
             raise ValueError("Either workflow_id or workflow_url must be provided")
 
         # Construct URL
-        url = f"https://api.segmind.com/workflows/{workflow_id}" if workflow_id else workflow_url
+        url = f"{self.workflows_base}/{workflow_id}" if workflow_id else workflow_url
 
         # Submit workflow request using the client
         response = self._client._request("POST", url, json=data or {})
@@ -57,7 +59,7 @@ class PixelFlows(Namespace):
         # Construct poll URL if only poll_id is provided
         # TODO: this is not correct, we need to use the poll_url from the response
         if not poll_url and poll_id:
-            poll_url = f"https://api.segmind.com/workflows/request/{poll_id}"
+            poll_url = f"{self.workflows_base}/request/{poll_id}"
 
         # Poll for results
         return self._poll_for_results(poll_url, poll_interval, max_wait_time)
@@ -86,7 +88,7 @@ class PixelFlows(Namespace):
                 }
 
             # Poll for status using the client
-            response = self.client._request("GET", poll_url)
+            response = self._client._request("GET", poll_url)
 
             result = response.json()
             status = result.get("status", "")
@@ -131,7 +133,7 @@ class PixelFlows(Namespace):
         # Construct URL
         url = f"{self.workflows_base}/request/{poll_id}" if poll_id else poll_url
 
-        response = self.client._request("GET", url)
+        response = self._client._request("GET", url)
 
         result = response.json()
 

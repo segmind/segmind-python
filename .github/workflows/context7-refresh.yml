@@ -1,0 +1,25 @@
+name: Refresh Context7 docs
+
+# Context7's automatic refresh is popularity-based, which for this library
+# means stale snippets serve for days after a docs change lands. Trigger a
+# refresh on every push to main so AI assistants pick up the current docs
+# immediately.
+#
+# Requires the CONTEXT7_API_KEY repository secret (from the Context7
+# dashboard of the account that claimed /segmind/segmind-python).
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Context7 refresh
+        run: |
+          curl -sf -X POST https://context7.com/api/v1/refresh \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.CONTEXT7_API_KEY }}" \
+            -d '{"libraryName": "/${{ github.repository }}"}'

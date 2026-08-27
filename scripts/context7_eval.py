@@ -19,14 +19,16 @@ import sys
 
 LIBRARY = "/segmind/segmind-python"
 
-# Content that must never appear in a served answer: slugs retired in
-# production and the verb removed in 1.1.0.
+# Content that must never appear in a served answer: model slugs retired in
+# production and classes from the pre-2024 wrapper. The removed run_async()
+# verb is deliberately NOT here — the library-rules banner and the migration
+# guide legitimately name it while telling readers not to use it, and the
+# required-verbs checks below already catch an answer that teaches it.
 FORBIDDEN = [
     "seedream-v3-text-to-image",
     "seedance-1-pro",
     "seededit-v3",
     "qwen2p5-vl-32b-instruct",
-    "run_async(",
     "SD2_1",
     "Kadinsky",
 ]

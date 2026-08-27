@@ -2,7 +2,16 @@
 
 All notable changes to the Segmind Python SDK are documented here.
 
-## Unreleased
+## 1.2.0 — 2026-08-27
+
+### Fixed
+
+- **PixelFlows polling no longer crashes.** In 1.1.0 every polling path raised
+  `AttributeError` from two attributes that were never defined:
+  `pixelflows.run(...)` with the default `poll=True` submitted the workflow
+  (and billed it) then crashed on the first status check, and
+  `get_status()` / `poll()` crashed on any `poll_id`. Only
+  `run(..., poll=False)` worked. All paths now poll correctly.
 
 ### Added
 
@@ -10,6 +19,13 @@ All notable changes to the Segmind Python SDK are documented here.
   made the request. Inside a team, any member of that team may be requested;
   outside one, only your own user id is accepted. Rows now also carry `user_id`
   and `user_email`.
+
+### Docs
+
+- Every example rewritten to lead with the default `run()` verb and use live
+  model slugs — the previous examples referenced four retired models,
+  including the quickstart. All headline snippets are verified against the
+  production API.
 
 ## 1.1.0 — ⚠️ BREAKING
 

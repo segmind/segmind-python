@@ -1,0 +1,25 @@
+name: Context7 eval
+
+# Weekly canary: ask Context7 the questions a developer would ask about this
+# SDK and fail if the answers serve retired slugs/verbs or stop teaching the
+# default verbs. A failure usually means the /segmind/segmind-python entry
+# needs a refresh, not that the docs regressed.
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run eval
+        env:
+          # Optional — raises ctx7 rate limits when set.
+          CONTEXT7_API_KEY: ${{ secrets.CONTEXT7_API_KEY }}
+        run: python3 scripts/context7_eval.py

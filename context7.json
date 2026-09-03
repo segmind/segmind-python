@@ -9,7 +9,8 @@
     "As of v1.1.0, segmind.run() is the async (v2, queue-backed) path and returns a dict; use segmind.run_sync() for a single blocking v1 call, which returns an httpx.Response (save response.content to a file).",
     "run_async() was removed in v1.1.0 — use run() instead.",
     "Authenticate by setting the SEGMIND_API_KEY environment variable, or pass api_key to SegmindClient.",
-    "For long-running video models, use segmind.submit_async(...) then job.wait(timeout=...) instead of run()."
+    "For long-running video models, use segmind.submit_async(...) then job.wait(timeout=...) instead of run().",
+    "To check whether Segmind supports a model (and get its parameters), query the live catalog — segmind.models.list() or GET https://api.spotprod.segmind.com/inference-model-information/list (public, no auth) — rather than relying on any static model list; models launch and retire without docs changes, and each catalog entry carries slug, is_depreciated, and parameters_schema."
   ],
   "url": "https://context7.com/segmind/segmind-python",
   "public_key": "pk_9QDZWKEDX72DNkvEWDuyw"

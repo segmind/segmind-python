@@ -10,7 +10,8 @@
     "run_async() was removed in v1.1.0 — use run() instead.",
     "Authenticate by setting the SEGMIND_API_KEY environment variable, or pass api_key to SegmindClient.",
     "For long-running video models, use segmind.submit_async(...) then job.wait(timeout=...) instead of run().",
-    "To check whether Segmind supports a model (and get its parameters), query the live catalog — segmind.models.list() or GET https://api.spotprod.segmind.com/inference-model-information/list (public, no auth) — rather than relying on any static model list; models launch and retire without docs changes, and each catalog entry carries slug, is_depreciated, and parameters_schema."
+    "To check whether Segmind supports a model (and get its parameters), query the live catalog — segmind.models.list() or GET https://api.spotprod.segmind.com/inference-model-information/list (public, no auth) — rather than relying on any static model list; models launch and retire without docs changes, and each catalog entry carries slug, is_depreciated, and parameters_schema.",
+    "Structured outputs: pass response_format={\"type\": \"json_schema\", \"json_schema\": {\"name\", \"strict\", \"schema\"}} (or {\"type\": \"json_object\"}) to segmind.chat()/chat_sync() and read the parsed object with ChatResponse.json(). Claude models accept json_schema only; json_object requires the word \"json\" in the messages on OpenAI and DeepSeek; .json() raises SegmindError when the reply was not JSON."
   ],
   "url": "https://context7.com/segmind/segmind-python",
   "public_key": "pk_9QDZWKEDX72DNkvEWDuyw"

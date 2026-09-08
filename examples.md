@@ -203,6 +203,45 @@ reply = segmind.chat_sync("gpt-5.5", prompt="tell me a joke on cats")
 print(reply.text)
 ```
 
+### Structured Output (JSON)
+
+`response_format` constrains the reply to JSON. Pass it through as a kwarg and
+read the parsed object with `ChatResponse.json()` — the same on `chat` (async)
+and `chat_sync`.
+
+```python
+import segmind
+
+reply = segmind.chat("gpt-5.5", prompt="Invent one person.", response_format={
+    "type": "json_schema",
+    "json_schema": {
+        "name": "person",
+        "strict": True,
+        "schema": {
+            "type": "object",
+            "properties": {"name": {"type": "string"}, "age": {"type": "integer"}},
+            "required": ["name", "age"],
+            "additionalProperties": False,
+        },
+    },
+})
+person = reply.json()   # {'name': 'Mira Solen', 'age': 34}
+```
+
+Three rules decide whether the call succeeds:
+
+- **Claude models accept `json_schema` only.** `{"type": "json_object"}` returns
+  a 400 explaining that Claude has no schema-less JSON mode.
+- **`{"type": "json_object"}` needs the word "json" in the messages** on OpenAI
+  and DeepSeek — they reject the request outright without it. `json_schema`
+  carries no such rule.
+- **`.json()` raises `SegmindError`** when the reply was not JSON — a refusal,
+  for instance — so catch it rather than assuming the constraint held.
+
+Not every model supports both types, and a few support neither; see
+[Structured outputs](https://docs.segmind.com/docs/serverless-api/structured-outputs)
+for the support matrix.
+
 ### Chat About an Image (Multimodal)
 
 `segmind.image_url()` inlines a local file as a base64 data-URI message part.

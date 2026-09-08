@@ -2,6 +2,19 @@
 
 All notable changes to the Segmind Python SDK are documented here.
 
+## Unreleased
+
+### Docs
+
+- **Structured outputs.** Every chat model now honours an OpenAI-style
+  `response_format`, which the SDK already forwards verbatim — no code change
+  was needed. Documented the `response_format=` kwarg with
+  `ChatResponse.json()` in the README, examples and quickstart, along with the
+  three rules that decide whether the call succeeds: Claude accepts
+  `json_schema` only, `json_object` requires the word "json" in the messages on
+  OpenAI and DeepSeek, and `.json()` raises `SegmindError` when the reply was
+  not JSON.
+
 ## 1.2.0 — 2026-08-27
 
 ### Fixed

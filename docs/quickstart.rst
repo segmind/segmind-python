@@ -154,6 +154,22 @@ Common Use Cases
    reply = segmind.chat("gpt-5.5", prompt="What is artificial intelligence?")
    print(reply.text)
 
+   # Structured output: constrain the reply to a JSON Schema and parse it.
+   reply = segmind.chat("gpt-5.5", prompt="Invent one person.", response_format={
+       "type": "json_schema",
+       "json_schema": {"name": "person", "strict": True, "schema": {
+           "type": "object",
+           "properties": {"name": {"type": "string"}, "age": {"type": "integer"}},
+           "required": ["name", "age"],
+           "additionalProperties": False,
+       }},
+   })
+   print(reply.json())
+
+See :ref:`examples:llm-chat` for the rules that decide whether a structured
+request succeeds — Claude takes ``json_schema`` only, and ``json_object``
+requires the word "json" in the messages on OpenAI and DeepSeek.
+
 Need Help?
 ----------
 

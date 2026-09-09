@@ -103,6 +103,23 @@ msg = {"role": "user", "content": [
     segmind.image_url("cat.png"),
 ]}
 reply = segmind.chat("gpt-5.5", messages=[msg])
+
+# Structured output: constrain the reply to a JSON Schema, then parse it.
+# `.json()` works the same on chat() and chat_sync().
+reply = segmind.chat("gpt-5.5", prompt="Invent one person.", response_format={
+    "type": "json_schema",
+    "json_schema": {
+        "name": "person",
+        "strict": True,
+        "schema": {
+            "type": "object",
+            "properties": {"name": {"type": "string"}, "age": {"type": "integer"}},
+            "required": ["name", "age"],
+            "additionalProperties": False,
+        },
+    },
+})
+person = reply.json()   # {'name': 'Mira Solen', 'age': 34}
 ```
 
 ### PixelFlows

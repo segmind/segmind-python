@@ -479,6 +479,32 @@ filtered = segmind.generations.list(
 )
 ```
 
+### Cost, Prompt and Inputs of Past Requests
+
+`generations.list()` rows carry `credits_deduction` (cost in USD), `status`,
+`prompt` and the full input `parameters` alongside the output URL.
+`generations.history()` returns one row per request instead — failures
+included — and `generations.get()` fetches a single request by id.
+
+```python
+import segmind
+
+for gen in segmind.generations.list()["data"]:
+    print(gen["model_name"], gen["credits_deduction"], gen["prompt"])
+
+# Every request in a window (max 31 days), most expensive first
+history = segmind.generations.history(
+    from_date="2026-09-01",
+    to_date="2026-09-15",
+    status="COMPLETED",
+    sort_by="credits_deduction",
+)
+for req in history["data"]:
+    print(req["request_id"], req["credits_deduction"], req["request_body"])
+
+one = segmind.generations.get("5708ee2c54894941661597cd38eb68af")
+```
+
 ## Advanced Usage
 
 For custom configuration (timeout, base URL, explicit API key), use

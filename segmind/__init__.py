@@ -213,6 +213,14 @@ class _Generations:
         """Get recent generations for a model."""
         return _get_client().generations.recent(model_name)
 
+    def history(self, **kwargs):
+        """List requests with their cost, inputs and outcome."""
+        return _get_client().generations.history(**kwargs)
+
+    def get(self, request_id):
+        """Get one request by its id."""
+        return _get_client().generations.get(request_id)
+
 
 # Module-level namespaces
 files = _Files()

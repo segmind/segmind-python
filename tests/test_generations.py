@@ -217,3 +217,80 @@ class TestGenerations:
             "https://api.spotprod.segmind.com/inference-request/generations",
             params={"page": 1},
         )
+
+
+class TestGenerationsHistory:
+    """history() and get() read /request-history, which carries cost and inputs."""
+
+    HISTORY_URL = "https://api.spotprod.segmind.com/inference-request/request-history"
+
+    def _generations(self, payload=None):
+        mock_client = mock.MagicMock()
+        mock_client._request.return_value.json.return_value = payload or {"data": []}
+        return Generations(mock_client), mock_client
+
+    def test_history_defaults(self):
+        generations, client = self._generations()
+        generations.history()
+        client._request.assert_called_once_with(
+            "GET", self.HISTORY_URL, params={"page": 1, "per_page": 20}
+        )
+
+    def test_history_forwards_only_the_filters_given(self):
+        generations, client = self._generations()
+        generations.history(
+            page=3,
+            per_page=50,
+            from_date="2026-09-01",
+            to_date="2026-09-15",
+            model_name="sam3-image",
+            status="COMPLETED",
+            user_email="someone@example.com",
+            sort_by="credits_deduction",
+            sort_order="asc",
+        )
+        client._request.assert_called_once_with(
+            "GET",
+            self.HISTORY_URL,
+            params={
+                "page": 3,
+                "per_page": 50,
+                "from_date": "2026-09-01",
+                "to_date": "2026-09-15",
+                "model_name": "sam3-image",
+                "status": "COMPLETED",
+                "user_email": "someone@example.com",
+                "sort_by": "credits_deduction",
+                "sort_order": "asc",
+            },
+        )
+
+    def test_history_returns_cost_and_inputs(self):
+        row = {"request_id": "abc", "credits_deduction": 0.0035, "request_body": "{'prompt': 'fox'}"}
+        generations, _ = self._generations({"data": [row]})
+        assert generations.history()["data"][0]["credits_deduction"] == 0.0035
+
+    def test_get_calls_the_detail_endpoint(self):
+        generations, client = self._generations({"request_id": "5708ee2c"})
+        result = generations.get("5708ee2c")
+        client._request.assert_called_once_with("GET", f"{self.HISTORY_URL}/5708ee2c")
+        assert result["request_id"] == "5708ee2c"
+
+    def test_get_escapes_the_id_into_one_path_segment(self):
+        generations, client = self._generations()
+        generations.get("../team-usage-summary")
+        client._request.assert_called_once_with(
+            "GET", f"{self.HISTORY_URL}/..%2Fteam-usage-summary"
+        )
+
+
+class TestModuleLevelGenerations:
+    def test_module_level_history_and_get_delegate(self):
+        import segmind
+
+        with mock.patch.object(segmind, "_get_client") as get_client:
+            segmind.generations.history(page=2)
+            segmind.generations.get("abc")
+
+        get_client.return_value.generations.history.assert_called_once_with(page=2)
+        get_client.return_value.generations.get.assert_called_once_with("abc")

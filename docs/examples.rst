@@ -351,8 +351,8 @@ Cost, Prompt and Inputs of Past Requests
 
 ``generations.list()`` rows carry ``credits_deduction`` (cost in USD),
 ``status``, ``prompt`` and the full input ``parameters`` alongside the output
-URL. ``generations.history()`` returns one row per request instead — failures
-included — and ``generations.get()`` fetches a single request by id.
+URL. ``generations.history()`` lists requests instead — failures
+included — and ``generations.get()`` fetches one of your own requests by id.
 
 .. code-block:: python
 

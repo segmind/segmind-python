@@ -4,6 +4,8 @@ All notable changes to the Segmind Python SDK are documented here.
 
 ## Unreleased
 
+## 1.3.0 — 2026-09-23
+
 ### Added
 
 - `generations.list()` rows now carry `status`, `credits_deduction` (cost in

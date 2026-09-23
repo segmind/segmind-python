@@ -4,6 +4,18 @@ All notable changes to the Segmind Python SDK are documented here.
 
 ## Unreleased
 
+### Added
+
+- `generations.list()` rows now carry `status`, `credits_deduction` (cost in
+  USD), `latency_ms`, `prompt` and the full input `parameters` (server-side
+  change; no SDK upgrade needed to see them). Read them with `.get()` — older
+  servers omit the keys.
+- `generations.history()` — requests with cost, inputs and outcome, failures
+  included (a multi-output request repeats once per output; de-duplicate on
+  `request_id` before summing cost). Filters: date window (max 31 days), `model_name`,
+  `status`, `user_id`/`user_email`; sortable by cost.
+- `generations.get(request_id)` — one of your own requests by id, of any age.
+
 ### Docs
 
 - **Structured outputs.** Every chat model now honours an OpenAI-style

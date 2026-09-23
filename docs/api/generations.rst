@@ -15,6 +15,8 @@ The generations module supports these operations:
 
 * :meth:`Generations.recent` - Get recent generations for a specific model
 * :meth:`Generations.list` - List all generations with filtering and pagination
+* :meth:`Generations.history` - List requests (failures included) with cost and inputs
+* :meth:`Generations.get` - Get one request by its ``request_id``
 
 Filtering Options
 -----------------
@@ -32,10 +34,15 @@ The :meth:`Generations.list` method supports several filtering options:
 Generation Data
 ---------------
 
-Each generation contains information about:
+Each row returned by :meth:`Generations.list` contains:
 
-* Generation ID and timestamps
-* Model used for generation
-* Input parameters
-* Output data and URLs
-* Generation status and metadata
+* ``id``, ``request_id``, ``created_at``, ``updated_at``
+* ``model_name`` and ``generation_url`` (the output)
+* ``user_id`` and ``user_email``
+* ``status`` - ``COMPLETED``, ``FAILED`` or ``PENDING``
+* ``credits_deduction`` - what the request cost, in USD
+* ``latency_ms``
+* ``prompt`` and ``parameters`` - the inputs the request was made with
+
+The last five come from the request record, which is written shortly after the
+output, so a generation only seconds old may still have them as ``None``.

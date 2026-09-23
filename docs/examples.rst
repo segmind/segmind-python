@@ -359,9 +359,10 @@ included — and ``generations.get()`` fetches a single request by id.
    import segmind
 
    for gen in segmind.generations.list()["data"]:
-       print(gen["model_name"], gen["credits_deduction"], gen["prompt"])
+       print(gen["model_name"], gen.get("credits_deduction"), gen.get("prompt"))
 
-   # Every request in a window (max 31 days), most expensive first
+   # Every request in a window (max 31 days), most expensive first.
+   # A multi-output request repeats per output; de-dupe on request_id before summing.
    history = segmind.generations.history(
        from_date="2026-09-01",
        to_date="2026-09-15",

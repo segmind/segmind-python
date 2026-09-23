@@ -48,7 +48,9 @@ class Generations(Namespace):
             the output ``generation_url`` plus, from the request behind it,
             ``status``, ``credits_deduction`` (cost in USD), ``latency_ms``,
             ``prompt`` and the full input ``parameters``. These are ``None``
-            for a generation whose request record has not landed yet.
+            for a generation whose request record has not landed yet. Read
+            them with ``row.get(...)``: servers that predate them omit the
+            keys entirely.
         """
         params = {"page": page}
 
@@ -80,9 +82,11 @@ class Generations(Namespace):
     ) -> dict[str, Any]:
         """List requests with their cost, inputs and outcome, failures included.
 
-        Unlike :meth:`list`, which returns one row per generated output, this
-        returns one row per API request, so failed and in-flight requests
-        appear too.
+        Unlike :meth:`list`, which only has requests that produced an output,
+        this includes failed and in-flight requests too. A request that
+        produced several outputs appears once per output, each row carrying
+        the request's full ``credits_deduction`` — de-duplicate on
+        ``request_id`` before summing cost.
 
         Args:
             page: Page number for pagination (default: 1)
@@ -122,13 +126,16 @@ class Generations(Namespace):
         return response.json()
 
     def get(self, request_id: str) -> dict[str, Any]:
-        """Get one request by its id, with cost, inputs and output URL.
+        """Get one of your own requests by its id, with cost, inputs and output URL.
 
-        Not bounded by a date window, so a request of any age resolves.
+        Not bounded by a date window, so a request of any age resolves. Only
+        requests made by the calling account resolve: inside a team,
+        :meth:`history` also lists teammates' requests, and passing one of
+        their ids here raises a not-found error.
 
         Args:
-            request_id: The ``request_id`` of a generation, as returned by
-                :meth:`list` or :meth:`history`
+            request_id: The ``request_id`` of one of your generations, as
+                returned by :meth:`list` or :meth:`history`
 
         Returns:
             Dictionary with the same fields as a :meth:`history` row.

@@ -3,7 +3,6 @@ from urllib.parse import quote
 
 from segmind.resource import Namespace
 
-
 REQUEST_HISTORY_URL = "https://api.spotprod.segmind.com/inference-request/request-history"
 
 

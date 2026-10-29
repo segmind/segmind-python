@@ -66,7 +66,23 @@ class SegmindClient:
             headers=headers,
             timeout=httpx.Timeout(self.timeout, connect=5.0),
             base_url=self.base_url,
+            event_hooks={"request": [self._keep_key_on_segmind_hosts]},
         )
+
+    def _keep_key_on_segmind_hosts(self, request: httpx.Request) -> None:
+        """Drop the API key from a request to any host but Segmind's.
+
+        Some URLs come from responses (a v2 ``status_url``, a PixelFlow
+        ``poll_url``) or from the caller (``workflow_url``). The key goes only
+        to the client's own base host and to https Segmind hosts, never to
+        whatever host such a URL names.
+        """
+        host = request.url.host
+        if host == httpx.URL(self.base_url).host:
+            return
+        if request.url.scheme == "https" and (host == "segmind.com" or host.endswith(".segmind.com")):
+            return
+        request.headers.pop("x-api-key", None)
 
     def run(self, slug: str, **params) -> dict:
         """Run a model inference request — **async (v2) by default**.

@@ -2,6 +2,7 @@
 
 from unittest import mock
 
+import httpx
 import pytest
 
 import segmind
@@ -570,3 +571,83 @@ class TestClientAdvancedFeatures:
         # But should reference their respective clients
         assert client1.models._client is client1
         assert client2.models._client is client2
+
+
+class TestApiKeyHostGuard:
+    """The API key goes only to Segmind hosts, whatever URL a request names."""
+
+    def _sent_headers(self, client, url):
+        """Send one GET through the client's real hooks and return the headers that left."""
+        seen = {}
+
+        def handler(request):
+            seen.update(request.headers)
+            return httpx.Response(200, json={})
+
+        client._client._transport = httpx.MockTransport(handler)
+        client._client.get(url)
+        return seen
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "https://api.segmind.com/v2/requests/abc/status",
+            "https://api.spotprod.segmind.com/webhook/get",
+            "https://workflows-api.segmind.com/upload-asset",
+            "/flux-schnell",
+        ],
+    )
+    def test_key_sent_to_segmind_hosts(self, mock_api_key, url):
+        client = SegmindClient(api_key=mock_api_key)
+
+        assert self._sent_headers(client, url)["x-api-key"] == mock_api_key
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "https://evil.example/v2/requests/abc/status",
+            "https://segmind.com.evil.example/poll",
+            "https://notsegmind.com/poll",
+            "http://api.spotprod.segmind.com/webhook/get",
+            "https://segmind-transient-inputs.s3.amazonaws.com/uploads/x.png",
+        ],
+    )
+    def test_key_withheld_from_other_hosts(self, mock_api_key, url):
+        client = SegmindClient(api_key=mock_api_key)
+
+        headers = self._sent_headers(client, url)
+
+        assert "x-api-key" not in headers
+        assert headers["x-initiator"] == "SDK-PY"
+
+    def test_key_sent_to_custom_base_host(self, mock_api_key):
+        client = SegmindClient(api_key=mock_api_key, base_url="http://localhost:5001/v1")
+
+        assert self._sent_headers(client, "/flux-schnell")["x-api-key"] == mock_api_key
+
+    def test_v2_status_url_on_another_host_gets_no_key(self, mock_api_key):
+        """A v2 job polls the status_url the submit returned; a foreign one gets no key."""
+        from segmind.v2 import AsyncJob
+
+        client = SegmindClient(api_key=mock_api_key)
+        seen = {}
+
+        def handler(request):
+            seen[str(request.url)] = request.headers.get("x-api-key")
+            return httpx.Response(200, json={"status": "COMPLETED"})
+
+        client._client._transport = httpx.MockTransport(handler)
+        job = AsyncJob(
+            request_id="abc",
+            status_url="https://evil.example/v2/requests/abc/status",
+            response_url="https://api.segmind.com/v2/requests/abc",
+            submit_response={},
+            _client=client,
+        )
+        job.status()
+        job.result()
+
+        assert seen == {
+            "https://evil.example/v2/requests/abc/status": None,
+            "https://api.segmind.com/v2/requests/abc": mock_api_key,
+        }

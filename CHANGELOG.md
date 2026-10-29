@@ -4,6 +4,24 @@ All notable changes to the Segmind Python SDK are documented here.
 
 ## Unreleased
 
+### Fixed
+
+- **`webhooks.delete()` now deactivates the webhook.** It sent `GET /inactive`,
+  which the server answers by listing your webhooks, so nothing was ever
+  deactivated. It now sends `DELETE`.
+- **`webhooks.update()` now changes the webhook's URL.** It sent `POST /update`,
+  which the server treats as `add`: it registered a second webhook (or
+  returned 409) while the old URL kept receiving events. It now sends `PUT`,
+  which keeps the webhook's id and signing secret. The server cannot change
+  event types in place, so `event_types` is now optional and ignored, with a
+  `UserWarning` when passed; to change event types, `delete()` and `add()`.
+  Check `webhooks.get()` for registrations an earlier `update()` left behind.
+- **The API key goes only to Segmind hosts.** Every request carried
+  `x-api-key`, including requests to URLs taken from a response (a v2
+  `status_url` / `response_url`, a PixelFlow `poll_url`) or passed in as
+  `workflow_url`. The key is now dropped from any request whose host is
+  neither the client's base host nor an https `*.segmind.com` host.
+
 ## 1.3.0 — 2026-09-23
 
 ### Added

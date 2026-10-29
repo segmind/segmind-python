@@ -1,4 +1,5 @@
-from typing import Any
+import warnings
+from typing import Any, Optional
 
 from segmind.resource import Namespace
 
@@ -39,33 +40,45 @@ class Webhooks(Namespace):
         response = self._client._request("POST", url, json=payload)
         return response.json()
 
-    def update(self, webhook_id: str, webhook_url: str, event_types: list[str]) -> dict[str, Any]:
-        """Update an existing webhook.
+    def update(
+        self, webhook_id: str, webhook_url: str, event_types: Optional[list[str]] = None
+    ) -> dict[str, Any]:
+        """Change the URL an existing webhook delivers to.
+
+        The webhook keeps its id, signing secret and event types. The server
+        cannot change event types in place: to subscribe to different events,
+        ``delete()`` the webhook and ``add()`` a new one. Before 1.3.1 this
+        method registered a second webhook instead, so check ``get()`` for
+        registrations left behind.
 
         Args:
             webhook_id: The ID of the webhook to update
             webhook_url: The new URL to send webhook notifications to
-            event_types: List of event types to subscribe to (default: ["PIXELFLOW"])
+            event_types: Ignored, kept so existing calls still work. Passing it
+                emits a ``UserWarning``.
 
         Returns:
             Dictionary containing the update webhook response
         """
+        if event_types is not None:
+            warnings.warn(
+                "webhooks.update() changes the URL only; event_types is ignored. "
+                "To change event types, delete() the webhook and add() a new one.",
+                UserWarning,
+                stacklevel=2,
+            )
+
         url = f"{self.base_url}/update"
+        payload = {"webhook_id": webhook_id, "webhook_url": webhook_url}
 
-        if not event_types:
-            raise ValueError("Event types must be specified")
-
-        payload = {
-            "webhook_id": webhook_id,
-            "webhook_url": webhook_url,
-            "event": {"types": event_types},
-        }
-
-        response = self._client._request("POST", url, json=payload)
+        # One server resource serves /get, /add, /update and /inactive and
+        # dispatches on the HTTP method, so update must be a PUT: a POST here
+        # registers a second webhook instead.
+        response = self._client._request("PUT", url, json=payload)
         return response.json()
 
     def delete(self, webhook_id: str) -> dict[str, Any]:
-        """Delete a webhook by making it inactive.
+        """Deactivate a webhook so it stops receiving events.
 
         Args:
             webhook_id: The ID of the webhook to delete
@@ -75,8 +88,9 @@ class Webhooks(Namespace):
         """
         url = f"{self.base_url}/inactive"
 
+        # A GET here would only list your webhooks; DELETE deactivates.
         params = {"webhook_id": webhook_id}
-        response = self._client._request("GET", url, params=params)
+        response = self._client._request("DELETE", url, params=params)
         return response.json()
 
     def logs(self, webhook_id: str) -> dict[str, Any]:

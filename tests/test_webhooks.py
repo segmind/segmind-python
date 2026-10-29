@@ -198,53 +198,43 @@ class TestWebhooks:
         result = webhooks.update(
             webhook_id="wh-123456",
             webhook_url="https://updated.example.com/webhook",
-            event_types=["PIXELFLOW", "GENERATION"]
         )
 
         assert result["status"] == "success"
         assert result["webhook_id"] == "wh-123456"
         mock_client._request.assert_called_once_with(
-            "POST",
+            "PUT",
             "https://api.spotprod.segmind.com/webhook/update",
             json={
                 "webhook_id": "wh-123456",
                 "webhook_url": "https://updated.example.com/webhook",
-                "event": {"types": ["PIXELFLOW", "GENERATION"]}
             }
         )
 
-    def test_update_webhook_single_event_type(self, webhooks, mock_client):
-        """Test updating webhook with single event type."""
+    def test_update_webhook_event_types_warn_and_are_not_sent(self, webhooks, mock_client):
+        """The server changes the URL only, so event types are dropped with a warning."""
         mock_response = mock.MagicMock()
         mock_response.json.return_value = {"status": "success"}
         mock_client._request.return_value = mock_response
 
-        webhooks.update(
-            webhook_id="wh-single",
-            webhook_url="https://single.example.com/webhook",
-            event_types=["PIXELFLOW"]
-        )
+        with pytest.warns(UserWarning, match="event_types is ignored"):
+            webhooks.update(
+                webhook_id="wh-types",
+                webhook_url="https://example.com/webhook",
+                event_types=["PIXELFLOW"]
+            )
 
         call_args = mock_client._request.call_args
-        assert call_args[1]["json"]["event"]["types"] == ["PIXELFLOW"]
+        assert call_args[0][0] == "PUT"
+        assert "event" not in call_args[1]["json"]
 
-    def test_update_webhook_empty_event_types_raises_error(self, webhooks):
-        """Test that update() raises ValueError with empty event types."""
-        with pytest.raises(ValueError, match="Event types must be specified"):
-            webhooks.update(
-                webhook_id="wh-123",
-                webhook_url="https://example.com/webhook",
-                event_types=[]
-            )
+    def test_update_webhook_without_event_types_does_not_warn(self, webhooks, mock_client, recwarn):
+        """Omitting event types is the normal call and stays quiet."""
+        mock_client._request.return_value = mock.MagicMock()
 
-    def test_update_webhook_none_event_types_raises_error(self, webhooks):
-        """Test that update() raises ValueError with None event types."""
-        with pytest.raises(ValueError, match="Event types must be specified"):
-            webhooks.update(
-                webhook_id="wh-123",
-                webhook_url="https://example.com/webhook",
-                event_types=None
-            )
+        webhooks.update(webhook_id="wh-123", webhook_url="https://example.com/webhook")
+
+        assert not [w for w in recwarn if issubclass(w.category, UserWarning)]
 
     def test_update_webhook_different_url(self, webhooks, mock_client):
         """Test updating webhook with completely different URL."""
@@ -255,13 +245,13 @@ class TestWebhooks:
         webhooks.update(
             webhook_id="wh-change-url",
             webhook_url="https://completely-different.com/new/endpoint",
-            event_types=["GENERATION", "MODEL_INFERENCE"]
         )
 
         call_args = mock_client._request.call_args
-        assert call_args[1]["json"]["webhook_url"] == "https://completely-different.com/new/endpoint"
-        assert "GENERATION" in call_args[1]["json"]["event"]["types"]
-        assert "MODEL_INFERENCE" in call_args[1]["json"]["event"]["types"]
+        assert call_args[1]["json"] == {
+            "webhook_id": "wh-change-url",
+            "webhook_url": "https://completely-different.com/new/endpoint",
+        }
 
     # ==================== Test delete() method ====================
 
@@ -280,7 +270,7 @@ class TestWebhooks:
         assert result["status"] == "success"
         assert result["webhook_id"] == "wh-123456"
         mock_client._request.assert_called_once_with(
-            "GET",
+            "DELETE",
             "https://api.spotprod.segmind.com/webhook/inactive",
             params={"webhook_id": "wh-123456"}
         )
@@ -294,7 +284,7 @@ class TestWebhooks:
         webhooks.delete("wh-123_special-chars.456")
 
         mock_client._request.assert_called_once_with(
-            "GET",
+            "DELETE",
             "https://api.spotprod.segmind.com/webhook/inactive",
             params={"webhook_id": "wh-123_special-chars.456"}
         )
@@ -417,7 +407,6 @@ class TestWebhooks:
         update_result = webhooks.update(
             webhook_id=webhook_id,
             webhook_url="https://updated.example.com/webhook",
-            event_types=["PIXELFLOW", "GENERATION"]
         )
 
         # Delete webhook

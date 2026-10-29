@@ -4,6 +4,8 @@ All notable changes to the Segmind Python SDK are documented here.
 
 ## Unreleased
 
+## 1.3.1 — 2026-10-29
+
 ### Fixed
 
 - **`webhooks.delete()` now deactivates the webhook.** It sent `GET /inactive`,

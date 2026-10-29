@@ -185,8 +185,8 @@ class _Webhooks:
         """Add a webhook."""
         return _get_client().webhooks.add(webhook_url, event_types)
 
-    def update(self, webhook_id, webhook_url, event_types):
-        """Update a webhook."""
+    def update(self, webhook_id, webhook_url, event_types=None):
+        """Point a webhook at a new URL (event types cannot change in place)."""
         return _get_client().webhooks.update(webhook_id, webhook_url, event_types)
 
     def delete(self, webhook_id):

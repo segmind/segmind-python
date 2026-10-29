@@ -240,8 +240,7 @@ Update a Webhook
    result = segmind.webhooks.update(
        webhook_id="53a5fce9-11b7-4425-91da-47bd6515a8f9",
        webhook_url="https://newurl.com",
-       event_types=["PIXELFLOW"],
-   )
+   )  # changes the URL only; delete and add to change event types
 
 Delete a Webhook
 ~~~~~~~~~~~~~~~~

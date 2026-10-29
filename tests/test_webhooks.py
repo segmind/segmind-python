@@ -185,133 +185,66 @@ class TestWebhooks:
 
     # ==================== Test update() method ====================
 
-    def test_update_webhook_success(self, webhooks, mock_client):
-        """Test successful webhook update."""
+    def test_update_webhook_puts_the_new_url(self, webhooks, mock_client):
+        """update() PUTs: the server's POST on this resource adds a webhook."""
         mock_response = mock.MagicMock()
-        mock_response.json.return_value = {
-            "status": "success",
-            "webhook_id": "wh-123456",
-            "message": "Webhook updated successfully"
-        }
+        mock_response.json.return_value = {"message": "webhook updated successfully"}
         mock_client._request.return_value = mock_response
 
         result = webhooks.update(
             webhook_id="wh-123456",
             webhook_url="https://updated.example.com/webhook",
-            event_types=["PIXELFLOW", "GENERATION"]
+            event_types=["PIXELFLOW"],
         )
 
-        assert result["status"] == "success"
-        assert result["webhook_id"] == "wh-123456"
+        assert result["message"] == "webhook updated successfully"
         mock_client._request.assert_called_once_with(
-            "POST",
+            "PUT",
             "https://api.spotprod.segmind.com/webhook/update",
             json={
                 "webhook_id": "wh-123456",
                 "webhook_url": "https://updated.example.com/webhook",
-                "event": {"types": ["PIXELFLOW", "GENERATION"]}
-            }
+            },
         )
 
-    def test_update_webhook_single_event_type(self, webhooks, mock_client):
-        """Test updating webhook with single event type."""
-        mock_response = mock.MagicMock()
-        mock_response.json.return_value = {"status": "success"}
-        mock_client._request.return_value = mock_response
+    def test_update_webhook_without_event_types(self, webhooks, mock_client):
+        """Event types are optional and never sent."""
+        mock_client._request.return_value = mock.MagicMock()
 
-        webhooks.update(
-            webhook_id="wh-single",
-            webhook_url="https://single.example.com/webhook",
-            event_types=["PIXELFLOW"]
-        )
+        webhooks.update(webhook_id="wh-1", webhook_url="https://example.com/new")
 
         call_args = mock_client._request.call_args
-        assert call_args[1]["json"]["event"]["types"] == ["PIXELFLOW"]
-
-    def test_update_webhook_empty_event_types_raises_error(self, webhooks):
-        """Test that update() raises ValueError with empty event types."""
-        with pytest.raises(ValueError, match="Event types must be specified"):
-            webhooks.update(
-                webhook_id="wh-123",
-                webhook_url="https://example.com/webhook",
-                event_types=[]
-            )
-
-    def test_update_webhook_none_event_types_raises_error(self, webhooks):
-        """Test that update() raises ValueError with None event types."""
-        with pytest.raises(ValueError, match="Event types must be specified"):
-            webhooks.update(
-                webhook_id="wh-123",
-                webhook_url="https://example.com/webhook",
-                event_types=None
-            )
-
-    def test_update_webhook_different_url(self, webhooks, mock_client):
-        """Test updating webhook with completely different URL."""
-        mock_response = mock.MagicMock()
-        mock_response.json.return_value = {"status": "success"}
-        mock_client._request.return_value = mock_response
-
-        webhooks.update(
-            webhook_id="wh-change-url",
-            webhook_url="https://completely-different.com/new/endpoint",
-            event_types=["GENERATION", "MODEL_INFERENCE"]
-        )
-
-        call_args = mock_client._request.call_args
-        assert call_args[1]["json"]["webhook_url"] == "https://completely-different.com/new/endpoint"
-        assert "GENERATION" in call_args[1]["json"]["event"]["types"]
-        assert "MODEL_INFERENCE" in call_args[1]["json"]["event"]["types"]
+        assert call_args[0][0] == "PUT"
+        assert "event" not in call_args[1]["json"]
 
     # ==================== Test delete() method ====================
 
-    def test_delete_webhook_success(self, webhooks, mock_client):
-        """Test successful webhook deletion."""
+    def test_delete_webhook_sends_delete(self, webhooks, mock_client):
+        """delete() sends DELETE: a GET on /inactive only lists webhooks."""
         mock_response = mock.MagicMock()
-        mock_response.json.return_value = {
-            "status": "success",
-            "webhook_id": "wh-123456",
-            "message": "Webhook marked as inactive"
-        }
+        mock_response.json.return_value = {"message": "webhook deactivated successfully"}
         mock_client._request.return_value = mock_response
 
         result = webhooks.delete("wh-123456")
 
-        assert result["status"] == "success"
-        assert result["webhook_id"] == "wh-123456"
+        assert result["message"] == "webhook deactivated successfully"
         mock_client._request.assert_called_once_with(
-            "GET",
+            "DELETE",
             "https://api.spotprod.segmind.com/webhook/inactive",
-            params={"webhook_id": "wh-123456"}
+            params={"webhook_id": "wh-123456"},
         )
 
     def test_delete_webhook_with_special_characters(self, webhooks, mock_client):
         """Test deleting webhook with special characters in ID."""
-        mock_response = mock.MagicMock()
-        mock_response.json.return_value = {"status": "success"}
-        mock_client._request.return_value = mock_response
+        mock_client._request.return_value = mock.MagicMock()
 
         webhooks.delete("wh-123_special-chars.456")
 
         mock_client._request.assert_called_once_with(
-            "GET",
+            "DELETE",
             "https://api.spotprod.segmind.com/webhook/inactive",
-            params={"webhook_id": "wh-123_special-chars.456"}
+            params={"webhook_id": "wh-123_special-chars.456"},
         )
-
-    def test_delete_nonexistent_webhook(self, webhooks, mock_client):
-        """Test deleting a non-existent webhook."""
-        mock_response = mock.MagicMock()
-        mock_response.json.return_value = {
-            "status": "error",
-            "message": "Webhook not found"
-        }
-        mock_client._request.return_value = mock_response
-
-        result = webhooks.delete("wh-nonexistent")
-
-        assert result["status"] == "error"
-        assert result["message"] == "Webhook not found"
 
     # ==================== Test logs() method ====================
 

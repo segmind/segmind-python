@@ -4,6 +4,16 @@ All notable changes to the Segmind Python SDK are documented here.
 
 ## Unreleased
 
+### Fixed
+
+- **`webhooks.update()` and `webhooks.delete()` sent the wrong HTTP methods.**
+  The webhook API picks its handler by method, so `update` (a POST) registered a
+  second webhook while the old URL kept receiving events, and `delete` (a GET)
+  only listed webhooks. `update` now sends PUT and changes the URL; event types
+  can't change in place, so `event_types` is optional and ignored. `delete` now
+  sends DELETE. Check `webhooks.get()` for registrations an earlier `update`
+  left behind.
+
 ## 1.3.0 — 2026-09-23
 
 ### Added

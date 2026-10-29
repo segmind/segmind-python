@@ -47,7 +47,9 @@ class Webhooks(Namespace):
 
         The webhook keeps its id, signing secret and event types. The server
         cannot change event types in place: to subscribe to different events,
-        ``delete()`` the webhook and ``add()`` a new one.
+        ``delete()`` the webhook and ``add()`` a new one. Before 1.3.1 this
+        method registered a second webhook instead, so check ``get()`` for
+        registrations left behind.
 
         Args:
             webhook_id: The ID of the webhook to update

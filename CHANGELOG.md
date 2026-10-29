@@ -15,6 +15,7 @@ All notable changes to the Segmind Python SDK are documented here.
   which keeps the webhook's id and signing secret. The server cannot change
   event types in place, so `event_types` is now optional and ignored, with a
   `UserWarning` when passed; to change event types, `delete()` and `add()`.
+  Check `webhooks.get()` for registrations an earlier `update()` left behind.
 - **The API key goes only to Segmind hosts.** Every request carried
   `x-api-key`, including requests to URLs taken from a response (a v2
   `status_url` / `response_url`, a PixelFlow `poll_url`) or passed in as

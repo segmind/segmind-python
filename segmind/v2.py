@@ -24,6 +24,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 from segmind.exceptions import SegmindError, raise_for_status
+from segmind.resource import gateway_root
 
 if TYPE_CHECKING:
     from segmind.client import SegmindClient
@@ -221,15 +222,6 @@ def run(client: SegmindClient, slug: str, **params) -> dict[str, Any]:
 
 
 def _v2_base(client: SegmindClient) -> str:
-    """Derive the v2 prefix from the client's `base_url`.
-
-    The default client base_url is `https://api.segmind.com/v1`; the v2
-    endpoint sits at `https://api.segmind.com/v2`. We strip the trailing
-    `/vN` segment and append `/v2` so callers who override base_url for
-    staging (`api-latest.segmind.com/v1`) keep working without extra
-    config.
-    """
-    base = client.base_url.rstrip("/")
-    if "/" in base and base.rsplit("/", 1)[1].startswith("v"):
-        base = base.rsplit("/", 1)[0]
-    return base + "/v2"
+    """The v2 prefix for the client's `base_url`: the default
+    `https://api.segmind.com/v1` gives `https://api.segmind.com/v2`."""
+    return gateway_root(client.base_url) + "/v2"

@@ -1,7 +1,7 @@
 import contextlib
 import json
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from segmind.resource import Namespace
 
@@ -15,11 +15,11 @@ class PixelFlows(Namespace):
         self,
         workflow_id: Optional[str] = None,
         workflow_url: Optional[str] = None,
-        data: Optional[Dict[str, Any]] = None,
+        data: Optional[dict[str, Any]] = None,
         poll: bool = True,
         poll_interval: int = 2,
         max_wait_time: int = 300,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Run a workflow and optionally poll for results.
 
         Args:
@@ -66,7 +66,7 @@ class PixelFlows(Namespace):
 
     def _poll_for_results(
         self, poll_url: str, poll_interval: int, max_wait_time: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Poll the API until the workflow completes or times out.
 
         Args:
@@ -114,7 +114,7 @@ class PixelFlows(Namespace):
 
     def get_status(
         self, poll_id: Optional[str] = None, poll_url: Optional[str] = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get the status of a workflow request.
 
         Args:
@@ -150,7 +150,7 @@ class PixelFlows(Namespace):
         poll_url: Optional[str] = None,
         poll_interval: int = 2,
         max_wait_time: int = 300,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Poll for workflow results until completion or timeout.
 
         Args:

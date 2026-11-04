@@ -217,7 +217,7 @@ Then open http://localhost:8000 in your browser.
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.9+
 - httpx
 - typing-extensions (for Python < 3.10)
 

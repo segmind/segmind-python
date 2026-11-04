@@ -1,8 +1,8 @@
 """Sample files and file-related fixtures for testing."""
 
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator
 
 import pytest
 

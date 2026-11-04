@@ -10,7 +10,7 @@ description = "Python SDK for Segmind API"
 readme = "README.md"
 license = { file = "LICENSE" }
 authors = [{ name = "Segmind", email = "support@segmind.com" }]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "httpx>=0.25.0",
 ]
@@ -47,11 +47,11 @@ path = "segmind/__init__.py"
 
 [tool.black]
 line-length = 100
-target-version = ["py38", "py39", "py310", "py311"]
+target-version = ["py39", "py310", "py311"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py38"
+target-version = "py39"
 
 [tool.ruff.lint]
 ignore = ["E501", "B008"]

@@ -1,6 +1,6 @@
 """Mock response fixtures for testing API interactions."""
 
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 from unittest import mock
 
 import httpx
@@ -436,9 +436,9 @@ def create_mock_response():
     """Factory for creating mock HTTP responses."""
     def _create_response(
         status_code: int = 200,
-        json_data: Optional[Dict[str, Any]] = None,
+        json_data: Optional[dict[str, Any]] = None,
         text_data: Optional[str] = None,
-        headers: Optional[Dict[str, str]] = None
+        headers: Optional[dict[str, str]] = None
     ) -> mock.MagicMock:
         response = mock.MagicMock(spec=httpx.Response)
         response.status_code = status_code

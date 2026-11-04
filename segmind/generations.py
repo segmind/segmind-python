@@ -1,4 +1,6 @@
-from typing import Any, Optional
+from __future__ import annotations
+
+from typing import Any
 from urllib.parse import quote
 
 from segmind.resource import Namespace
@@ -26,10 +28,10 @@ class Generations(Namespace):
     def list(
         self,
         page: int = 1,
-        model_name: Optional[str] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        user_id: Optional[str] = None,
+        model_name: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        user_id: str | None = None,
     ) -> dict[str, Any]:
         """Get generations with pagination and filtering.
 
@@ -70,14 +72,14 @@ class Generations(Namespace):
         self,
         page: int = 1,
         per_page: int = 20,
-        from_date: Optional[str] = None,
-        to_date: Optional[str] = None,
-        model_name: Optional[str] = None,
-        status: Optional[str] = None,
-        user_id: Optional[str] = None,
-        user_email: Optional[str] = None,
-        sort_by: Optional[str] = None,
-        sort_order: Optional[str] = None,
+        from_date: str | None = None,
+        to_date: str | None = None,
+        model_name: str | None = None,
+        status: str | None = None,
+        user_id: str | None = None,
+        user_email: str | None = None,
+        sort_by: str | None = None,
+        sort_order: str | None = None,
     ) -> dict[str, Any]:
         """List requests with their cost, inputs and outcome, failures included.
 

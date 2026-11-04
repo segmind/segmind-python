@@ -16,8 +16,12 @@ All notable changes to the Segmind Python SDK are documented here.
     not listed.
   - To read everything, use the new `models.list_all(**filters)`.
   - For a model's parameters, use the new `models.get(slug)`.
-- **Python 3.8 is no longer declared as supported.** The SDK could be installed
-  there but raised `TypeError` on import. It now requires Python 3.9 or later.
+
+### Fixed
+
+- **The SDK now imports on Python 3.8.** The package declares support for 3.8, so
+  pip installed it there, but `list[str]`-style annotations raised `TypeError` on
+  `import segmind`. Annotations are now deferred, and CI tests 3.8.
 
 ### Added
 

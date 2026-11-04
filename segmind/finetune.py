@@ -1,4 +1,6 @@
-from typing import Any, Optional
+from __future__ import annotations
+
+from typing import Any
 
 from segmind.resource import Namespace
 
@@ -17,9 +19,9 @@ class Finetune(Namespace):
         base_model: str,
         train_type: str,
         machine_type: str,
-        theme: Optional[str] = None,
+        theme: str | None = None,
         segmind_public: bool = False,
-        advance_parameters: Optional[dict[str, Any]] = None,
+        advance_parameters: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Initiate a new fine-tuning request."""
 

@@ -453,10 +453,9 @@ class TestFiles:
 
         try:
             # Mock permission error during file opening
-            with (
-                mock.patch('builtins.open', side_effect=PermissionError("Permission denied")),
-                pytest.raises(PermissionError)
-            ):
+            with mock.patch(
+                'builtins.open', side_effect=PermissionError("Permission denied")
+            ), pytest.raises(PermissionError):
                 files.upload(temp_path)
         finally:
             temp_path.unlink(missing_ok=True)

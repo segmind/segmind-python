@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import warnings
-from typing import Any, Optional
+from typing import Any
 
 from segmind.resource import Namespace
 
@@ -41,7 +43,7 @@ class Webhooks(Namespace):
         return response.json()
 
     def update(
-        self, webhook_id: str, webhook_url: str, event_types: Optional[list[str]] = None
+        self, webhook_id: str, webhook_url: str, event_types: list[str] | None = None
     ) -> dict[str, Any]:
         """Change the URL an existing webhook delivers to.
 

@@ -1,9 +1,11 @@
+import warnings
 from typing import Any, Dict, Iterable, List, Optional, Union
 from urllib.parse import quote
 
 from segmind.resource import Namespace, gateway_root
 
 _MAX_PAGE_SIZE = 100
+_REGISTRY_URL = "https://api.spotprod.segmind.com/inference-model-information/list"
 
 
 class Models(Namespace):
@@ -12,7 +14,61 @@ class Models(Namespace):
     Hidden, deprecated and private models are not listed.
     """
 
-    def list(
+    def list(self, **filters: Any) -> Dict[str, Any]:
+        """Get one page of the catalog.
+
+        To read further, pass ``offset`` from the previous page while
+        ``has_more`` is true, or use ``list_all()``.
+
+        Calling this with no arguments at all is deprecated: it returns the old
+        registry list under ``"Inference Model Information List"`` and warns.
+        From 2.0 it will return a catalog page. For a page today, pass any
+        argument, such as ``limit=50``.
+
+        Args:
+            **filters: Any of these, by keyword:
+
+                - ``q``: Free-text search; sorts by relevance unless ``sort`` is given
+                - ``sort``: ``popular`` (default), ``newest``, ``name``, ``cheapest``,
+                  ``fastest`` or ``relevance`` (default when ``q`` is set)
+                - ``category``: For example ``textToImage`` or ``imageToVideo``
+                - ``modality``: Only models of this modality
+                - ``input``: Models taking any of these: ``text``, ``image``, ``video``,
+                  ``audio``
+                - ``output``: Models producing any of these: the input types, ``3d``,
+                  ``embedding`` or ``data``
+                - ``provider``: Only models from this provider
+                - ``slugs``: Look up these slugs, up to 100. Unlisted models resolve too
+                - ``operations``: Only models supporting these operations
+                - ``features``: Only models with these features
+                - ``min_popularity``: Lowest popularity score, 0-100 across the catalog
+                - ``min_category_percentile``: Lowest percentile, 0-100 within the category
+                - ``min_cost``: Lowest observed average spend per request, in USD
+                - ``max_cost``: Highest observed average spend per request, in USD
+                - ``max_latency``: Highest latency, in seconds
+                - ``is_new``: Only new models, or with ``False`` only established ones
+                - ``created_after``: ``YYYY-MM-DD``
+                - ``include_coming_soon``: Also list models that are not live yet
+                - ``facets``: Also return filter counts under ``facets``
+                - ``limit``: Page size, 1-100. Default 50
+                - ``offset``: Models to skip
+
+        Returns:
+            ``{"models": [...], "total", "limit", "offset", "has_more"}``
+        """
+        if filters:
+            return self._page(**filters)
+
+        warnings.warn(
+            "models.list() with no arguments returns the old registry list, and from "
+            "2.0 will return a catalog page instead. Pass any argument, such as "
+            "limit=50, for a page now, or use list_all() to read every model.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        return self._client._request("GET", _REGISTRY_URL).json()
+
+    def _page(
         self,
         *,
         q: Optional[str] = None,
@@ -37,39 +93,7 @@ class Models(Namespace):
         limit: Optional[int] = None,
         offset: Optional[int] = None,
     ) -> Dict[str, Any]:
-        """Get one page of the catalog. Every filter is optional.
-
-        To read further, pass ``offset`` from the previous page while
-        ``has_more`` is true, or use ``list_all()``.
-
-        Args:
-            q: Free-text search; sorts by relevance unless ``sort`` is given
-            sort: ``popular`` (default), ``newest``, ``name``, ``cheapest``,
-                ``fastest`` or ``relevance`` (default when ``q`` is set)
-            category: For example ``textToImage`` or ``imageToVideo``
-            modality: Only models of this modality
-            input: Models taking any of these: ``text``, ``image``, ``video``, ``audio``
-            output: Models producing any of these: the input types, ``3d``,
-                ``embedding`` or ``data``
-            provider: Only models from this provider
-            slugs: Look up these slugs, up to 100. Unlisted models resolve too
-            operations: Only models supporting these operations
-            features: Only models with these features
-            min_popularity: Lowest popularity score, 0-100 across the catalog
-            min_category_percentile: Lowest percentile, 0-100 within the category
-            min_cost: Lowest observed average spend per request, in USD
-            max_cost: Highest observed average spend per request, in USD
-            max_latency: Highest latency, in seconds
-            is_new: Only new models, or with ``False`` only established ones
-            created_after: ``YYYY-MM-DD``
-            include_coming_soon: Also list models that are not live yet
-            facets: Also return filter counts under ``facets``
-            limit: Page size, 1-100. Default 50
-            offset: Models to skip
-
-        Returns:
-            ``{"models": [...], "total", "limit", "offset", "has_more"}``
-        """
+        """Get one page of the catalog from the gateway."""
         params = {
             "q": q,
             "sort": sort,
@@ -111,7 +135,7 @@ class Models(Namespace):
         """
         models: List[Dict[str, Any]] = []
         while True:
-            page = self.list(**filters, limit=_MAX_PAGE_SIZE, offset=len(models))
+            page = self._page(**filters, limit=_MAX_PAGE_SIZE, offset=len(models))
             models.extend(page["models"])
             if not page.get("has_more") or not page["models"]:
                 return models

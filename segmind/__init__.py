@@ -200,7 +200,7 @@ class _Webhooks:
 
 class _Models:
     def list(self, **filters):
-        """Get one page of the model catalog."""
+        """Get one page of the model catalog. See ``Models.list``."""
         return _get_client().models.list(**filters)
 
     def list_all(self, **filters):

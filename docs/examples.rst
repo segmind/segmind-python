@@ -273,7 +273,7 @@ List All Models
 
    import segmind
 
-   # One page, 50 models by default. Every filter is optional.
+   # One page, 50 models by default. Any argument selects the catalog.
    page = segmind.models.list(output="video", sort="cheapest", limit=10)
    for model in page["models"]:
        print(model["slug"], model["average_cost"])

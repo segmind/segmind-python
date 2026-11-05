@@ -244,6 +244,20 @@ paths:
               schema:
                 type: string
 
+  /inference-model-information/list:
+    get:
+      summary: List models from the registry (what models.list() with no arguments calls until 2.0)
+      deprecated: true
+      servers:
+        - url: https://api.spotprod.segmind.com
+      responses:
+        '200':
+          description: Models list
+          content:
+            application/json:
+              schema:
+                type: object
+
   /models:
     get:
       summary: List models, one page at a time

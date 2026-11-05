@@ -47,7 +47,7 @@ if section == "Models":
     st.header("Models.list")
     if st.button("List Models"):
         with st.spinner("Fetching models..."):
-            render_response(client.models.list())
+            render_response(client.models.list_all())
 
 elif section == "Generations":
     st.header("Generations")

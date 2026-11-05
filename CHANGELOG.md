@@ -4,32 +4,32 @@ All notable changes to the Segmind Python SDK are documented here.
 
 ## Unreleased
 
-### Breaking
+### Added
 
-- **`models.list()` now reads the gateway's catalog at
-  `https://api.segmind.com/models`, one page at a time.** It used to call a Spot
-  registry endpoint and return every model under
-  `"Inference Model Information List"`. It now returns
-  `{"models", "total", "limit", "offset", "has_more"}`, 50 models by default.
-  - Entries no longer carry registry fields such as `parameters_schema`,
-    `is_visible` or `is_depreciated`. Hidden, deprecated and private models are
-    not listed.
-  - To read everything, use the new `models.list_all(**filters)`.
-  - For a model's parameters, use the new `models.get(slug)`.
+- **The gateway's model catalog, at `https://api.segmind.com/models`.**
+  - `models.list()` with any keyword argument returns one page:
+    `{"models", "total", "limit", "offset", "has_more"}`, 50 models by default.
+    It takes `q`, `sort`, `category`, `modality`, `input`, `output`, `provider`,
+    `slugs`, `operations`, `features`, `min_popularity`,
+    `min_category_percentile`, `min_cost`, `max_cost`, `max_latency`, `is_new`,
+    `created_after`, `include_coming_soon`, `facets`, `limit` and `offset`.
+  - `models.list_all(**filters)` reads every page.
+  - `models.get(slug)` returns one model with its `parameters_schema`.
+  - Catalog entries don't carry registry fields such as `is_visible` or
+    `is_depreciated`. Hidden, deprecated and private models are not listed.
+
+### Deprecated
+
+- **`models.list()` with no arguments.** It works as before, calling the Spot
+  registry and returning every model under `"Inference Model Information List"`,
+  and now emits a `FutureWarning`. From 2.0 it will return a catalog page. Pass
+  any argument, such as `limit=50`, or use `list_all()`.
 
 ### Fixed
 
 - **The SDK now imports on Python 3.8.** The package declares support for 3.8, so
   pip installed it there, but `list[str]`-style annotations raised `TypeError` on
   `import segmind`. They now use `typing.List` and `typing.Dict`, and CI tests 3.8.
-
-### Added
-
-- `models.list()` takes the catalog's filters as keyword arguments: `q`, `sort`,
-  `category`, `modality`, `input`, `output`, `provider`, `slugs`, `operations`,
-  `features`, `min_popularity`, `min_category_percentile`, `min_cost`,
-  `max_cost`, `max_latency`, `is_new`, `created_after`, `include_coming_soon`,
-  `facets`, `limit` and `offset`.
 
 ## 1.3.1 — 2026-10-29
 

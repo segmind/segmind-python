@@ -1,5 +1,6 @@
 """Tests for the Models service class."""
 
+import warnings
 from unittest import mock
 
 import httpx
@@ -9,7 +10,7 @@ import respx
 import segmind
 from segmind.client import SegmindClient
 from segmind.exceptions import SegmindError
-from segmind.models import Models
+from segmind.models import _REGISTRY_URL, Models
 from segmind.resource import Namespace
 
 
@@ -35,15 +36,31 @@ class TestModelsList:
         assert isinstance(Models(client), Namespace)
 
     @respx.mock
-    def test_reads_the_gateway_catalog_with_no_filters(self, client):
+    def test_any_argument_reads_the_gateway_catalog_without_warning(self, client):
         route = respx.get("https://api.segmind.com/models").mock(
             return_value=httpx.Response(200, json=_page([{"slug": "flux-schnell"}]))
         )
 
-        result = client.models.list()
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            result = client.models.list(limit=50)
 
         assert result["models"][0]["slug"] == "flux-schnell"
         assert result["has_more"] is False
+        assert dict(route.calls.last.request.url.params) == {"limit": "50"}
+
+    @respx.mock
+    def test_an_argument_set_to_none_still_reads_the_gateway_catalog(self, client):
+        """A caller passing an optional value through must get one response shape."""
+        route = respx.get("https://api.segmind.com/models").mock(
+            return_value=httpx.Response(200, json=_page([]))
+        )
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            result = client.models.list(q=None)
+
+        assert result["models"] == []
         assert route.calls.last.request.url.query == b""
 
     @respx.mock
@@ -109,7 +126,9 @@ class TestModelsList:
             return_value=httpx.Response(200, json=_page([]))
         )
 
-        SegmindClient(api_key="k", base_url="https://api-latest.segmind.com/v1").models.list()
+        SegmindClient(api_key="k", base_url="https://api-latest.segmind.com/v1").models.list(
+            limit=1
+        )
 
         assert route.called
 
@@ -123,6 +142,33 @@ class TestModelsList:
             client.models.list(sort="nope")
 
         assert exc_info.value.status == 400
+
+
+class TestModelsListWithNoArguments:
+    """Deprecated: this keeps its old behaviour until 2.0."""
+
+    @respx.mock
+    def test_returns_the_registry_list_and_warns(self, client):
+        body = {"Inference Model Information List": [{"slug": "flux-schnell", "is_visible": True}]}
+        registry = respx.get(_REGISTRY_URL).mock(return_value=httpx.Response(200, json=body))
+        catalog = respx.get("https://api.segmind.com/models")
+
+        with pytest.warns(FutureWarning, match="from 2.0 will return a catalog page"):
+            result = client.models.list()
+
+        assert result == body
+        assert registry.call_count == 1
+        assert registry.calls.last.request.url.query == b""
+        assert not catalog.called
+
+    @respx.mock
+    def test_an_error_is_a_segmind_error(self, client):
+        respx.get(_REGISTRY_URL).mock(return_value=httpx.Response(401, json={"error": "nope"}))
+
+        with pytest.warns(FutureWarning), pytest.raises(SegmindError) as exc_info:
+            client.models.list()
+
+        assert exc_info.value.status == 401
 
 
 class TestModelsListAll:
@@ -196,8 +242,12 @@ class TestModuleLevelModels:
     @pytest.mark.parametrize(
         ("call", "expected"),
         [
+            (lambda: segmind.models.list(), ("list", (), {})),
             (lambda: segmind.models.list(q="x"), ("list", (), {"q": "x"})),
-            (lambda: segmind.models.list_all(output="video"), ("list_all", (), {"output": "video"})),
+            (
+                lambda: segmind.models.list_all(output="video"),
+                ("list_all", (), {"output": "video"}),
+            ),
             (lambda: segmind.models.get("a"), ("get", ("a",), {})),
         ],
     )

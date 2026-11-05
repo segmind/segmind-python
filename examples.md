@@ -440,13 +440,22 @@ print(logs)
 
 ## Models
 
-### List All Models
+### Browse the Catalog
 
 ```python
 import segmind
 
-models = segmind.models.list()
-print(models)
+# One page, 50 models by default. Any argument selects the catalog.
+page = segmind.models.list(output="video", sort="cheapest", limit=10)
+for model in page["models"]:
+    print(model["slug"], model["average_cost"])
+
+# Every matching model, reading page after page
+videos = segmind.models.list_all(output="video")
+
+# One model, with its parameters_schema (404 if deprecated or hidden)
+model = segmind.models.get("flux-schnell")
+print(model["parameters_schema"])
 ```
 
 ## Generations

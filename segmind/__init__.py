@@ -199,9 +199,17 @@ class _Webhooks:
 
 
 class _Models:
-    def list(self):
-        """List available models."""
-        return _get_client().models.list()
+    def list(self, **filters):
+        """Get one page of the model catalog. See ``Models.list``."""
+        return _get_client().models.list(**filters)
+
+    def list_all(self, **filters):
+        """Get every model matching the filters."""
+        return _get_client().models.list_all(**filters)
+
+    def get(self, slug):
+        """Get one model, with its parameters_schema."""
+        return _get_client().models.get(slug)
 
 
 class _Generations:

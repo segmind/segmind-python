@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 from urllib.parse import quote
 
 from segmind.resource import Namespace
@@ -9,7 +9,7 @@ REQUEST_HISTORY_URL = "https://api.spotprod.segmind.com/inference-request/reques
 class Generations(Namespace):
     """Client for Segmind Generations API."""
 
-    def recent(self, model_name: str) -> dict[str, Any]:
+    def recent(self, model_name: str) -> Dict[str, Any]:
         """Get recent generations for a model.
 
         Args:
@@ -30,7 +30,7 @@ class Generations(Namespace):
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         user_id: Optional[str] = None,
-    ) -> dict[str, Any]:
+    ) -> Dict[str, Any]:
         """Get generations with pagination and filtering.
 
         Args:
@@ -78,7 +78,7 @@ class Generations(Namespace):
         user_email: Optional[str] = None,
         sort_by: Optional[str] = None,
         sort_order: Optional[str] = None,
-    ) -> dict[str, Any]:
+    ) -> Dict[str, Any]:
         """List requests with their cost, inputs and outcome, failures included.
 
         Unlike :meth:`list`, which only has requests that produced an output,
@@ -108,7 +108,7 @@ class Generations(Namespace):
             USD), ``request_body`` (the inputs as sent), ``generation_url``,
             ``latency_ms``, timestamps and, for failures, ``error``.
         """
-        params: dict[str, Any] = {"page": page, "per_page": per_page}
+        params: Dict[str, Any] = {"page": page, "per_page": per_page}
         optional = {
             "from_date": from_date,
             "to_date": to_date,
@@ -124,7 +124,7 @@ class Generations(Namespace):
         response = self._client._request("GET", REQUEST_HISTORY_URL, params=params)
         return response.json()
 
-    def get(self, request_id: str) -> dict[str, Any]:
+    def get(self, request_id: str) -> Dict[str, Any]:
         """Get one of your own requests by its id, with cost, inputs and output URL.
 
         Not bounded by a date window, so a request of any age resolves. Only

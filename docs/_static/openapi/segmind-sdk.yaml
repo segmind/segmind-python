@@ -246,7 +246,8 @@ paths:
 
   /inference-model-information/list:
     get:
-      summary: List models
+      summary: List models from the registry (what models.list() with no arguments calls until 2.0)
+      deprecated: true
       servers:
         - url: https://api.spotprod.segmind.com
       responses:
@@ -256,6 +257,65 @@ paths:
             application/json:
               schema:
                 type: object
+
+  /models:
+    get:
+      summary: List models, one page at a time
+      servers:
+        - url: https://api.segmind.com
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [popular, newest, name, cheapest, fastest, relevance]
+        - in: query
+          name: output
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: One page of the catalog
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /model/{slug}:
+    get:
+      summary: Get one model with its parameters_schema
+      servers:
+        - url: https://api.segmind.com
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The catalog entry
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Unknown, hidden, deprecated or private model
 
   /inference-request/generations:
     get:

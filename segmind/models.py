@@ -1,7 +1,4 @@
-from __future__ import annotations
-
-from collections.abc import Iterable
-from typing import Any
+from typing import Any, Dict, Iterable, List, Optional, Union
 from urllib.parse import quote
 
 from segmind.resource import Namespace, gateway_root
@@ -18,28 +15,28 @@ class Models(Namespace):
     def list(
         self,
         *,
-        q: str | None = None,
-        sort: str | None = None,
-        category: str | None = None,
-        modality: str | None = None,
-        input: str | Iterable[str] | None = None,
-        output: str | Iterable[str] | None = None,
-        provider: str | None = None,
-        slugs: str | Iterable[str] | None = None,
-        operations: str | Iterable[str] | None = None,
-        features: str | Iterable[str] | None = None,
-        min_popularity: int | None = None,
-        min_category_percentile: int | None = None,
-        min_cost: float | None = None,
-        max_cost: float | None = None,
-        max_latency: float | None = None,
-        is_new: bool | None = None,
-        created_after: str | None = None,
-        include_coming_soon: bool | None = None,
-        facets: bool | None = None,
-        limit: int | None = None,
-        offset: int | None = None,
-    ) -> dict[str, Any]:
+        q: Optional[str] = None,
+        sort: Optional[str] = None,
+        category: Optional[str] = None,
+        modality: Optional[str] = None,
+        input: Optional[Union[str, Iterable[str]]] = None,
+        output: Optional[Union[str, Iterable[str]]] = None,
+        provider: Optional[str] = None,
+        slugs: Optional[Union[str, Iterable[str]]] = None,
+        operations: Optional[Union[str, Iterable[str]]] = None,
+        features: Optional[Union[str, Iterable[str]]] = None,
+        min_popularity: Optional[int] = None,
+        min_category_percentile: Optional[int] = None,
+        min_cost: Optional[float] = None,
+        max_cost: Optional[float] = None,
+        max_latency: Optional[float] = None,
+        is_new: Optional[bool] = None,
+        created_after: Optional[str] = None,
+        include_coming_soon: Optional[bool] = None,
+        facets: Optional[bool] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+    ) -> Dict[str, Any]:
         """Get one page of the catalog. Every filter is optional.
 
         To read further, pass ``offset`` from the previous page while
@@ -102,7 +99,7 @@ class Models(Namespace):
         )
         return response.json()
 
-    def list_all(self, **filters: Any) -> list[dict[str, Any]]:
+    def list_all(self, **filters: Any) -> List[Dict[str, Any]]:
         """Get every model matching the filters, reading page after page.
 
         Args:
@@ -112,14 +109,14 @@ class Models(Namespace):
         Returns:
             The matching catalog entries
         """
-        models: list[dict[str, Any]] = []
+        models: List[Dict[str, Any]] = []
         while True:
             page = self.list(**filters, limit=_MAX_PAGE_SIZE, offset=len(models))
             models.extend(page["models"])
             if not page.get("has_more") or not page["models"]:
                 return models
 
-    def get(self, slug: str) -> dict[str, Any]:
+    def get(self, slug: str) -> Dict[str, Any]:
         """Get one model, with its ``parameters_schema``.
 
         ``list()`` entries leave the schema out. A hidden, deprecated or private
@@ -135,7 +132,7 @@ class Models(Namespace):
         return self._client._request("GET", url).json()
 
 
-def _join(value: str | Iterable[str] | None) -> str | None:
+def _join(value: Optional[Union[str, Iterable[str]]]) -> Optional[str]:
     """The gateway takes a list as one comma-joined query value."""
     if value is None or isinstance(value, str):
         return value

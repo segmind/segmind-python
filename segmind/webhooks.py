@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 import warnings
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 from segmind.resource import Namespace
 
@@ -11,7 +9,7 @@ class Webhooks(Namespace):
 
     base_url = "https://api.spotprod.segmind.com/webhook"
 
-    def get(self) -> dict[str, Any]:
+    def get(self) -> Dict[str, Any]:
         """Get all webhooks.
 
         Returns:
@@ -22,7 +20,7 @@ class Webhooks(Namespace):
         response = self._client._request("GET", url)
         return response.json()
 
-    def add(self, webhook_url: str, event_types: list[str]) -> dict[str, Any]:
+    def add(self, webhook_url: str, event_types: List[str]) -> Dict[str, Any]:
         """Add a new webhook.
 
         Args:
@@ -43,8 +41,8 @@ class Webhooks(Namespace):
         return response.json()
 
     def update(
-        self, webhook_id: str, webhook_url: str, event_types: list[str] | None = None
-    ) -> dict[str, Any]:
+        self, webhook_id: str, webhook_url: str, event_types: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
         """Change the URL an existing webhook delivers to.
 
         The webhook keeps its id, signing secret and event types. The server
@@ -79,7 +77,7 @@ class Webhooks(Namespace):
         response = self._client._request("PUT", url, json=payload)
         return response.json()
 
-    def delete(self, webhook_id: str) -> dict[str, Any]:
+    def delete(self, webhook_id: str) -> Dict[str, Any]:
         """Deactivate a webhook so it stops receiving events.
 
         Args:
@@ -95,7 +93,7 @@ class Webhooks(Namespace):
         response = self._client._request("DELETE", url, params=params)
         return response.json()
 
-    def logs(self, webhook_id: str) -> dict[str, Any]:
+    def logs(self, webhook_id: str) -> Dict[str, Any]:
         """Get dispatch logs for a webhook.
 
         Args:

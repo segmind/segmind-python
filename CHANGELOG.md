@@ -21,7 +21,7 @@ All notable changes to the Segmind Python SDK are documented here.
 
 - **The SDK now imports on Python 3.8.** The package declares support for 3.8, so
   pip installed it there, but `list[str]`-style annotations raised `TypeError` on
-  `import segmind`. Annotations are now deferred, and CI tests 3.8.
+  `import segmind`. They now use `typing.List` and `typing.Dict`, and CI tests 3.8.
 
 ### Added
 

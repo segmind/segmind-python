@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-from typing import Any
+from typing import Any, Dict
 
 from segmind.resource import Namespace
 
@@ -8,7 +6,7 @@ from segmind.resource import Namespace
 class Accounts(Namespace):
     """Client for Segmind Accounts API."""
 
-    def current(self) -> dict[str, Any]:
+    def current(self) -> Dict[str, Any]:
         """Get account information.
 
         Returns:

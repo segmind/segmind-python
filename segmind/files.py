@@ -1,8 +1,6 @@
-from __future__ import annotations
-
 import base64
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Union
 
 from segmind.resource import Namespace
 
@@ -16,7 +14,7 @@ class Files(Namespace):
 
     STORAGE_BASE_URL = "https://workflows-api.segmind.com"
 
-    def upload(self, file_paths: str | Path | list[str | Path]) -> dict[str, Any]:
+    def upload(self, file_paths: Union[str, Path, List[Union[str, Path]]]) -> Dict[str, Any]:
         """Upload one or more media files to Segmind Storage.
 
         Uses the Segmind Storage API to upload files as base64-encoded data URLs

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Union
 from urllib.parse import quote
 
 from segmind.resource import Namespace
@@ -78,6 +78,8 @@ class Generations(Namespace):
         user_email: Optional[str] = None,
         sort_by: Optional[str] = None,
         sort_order: Optional[str] = None,
+        initiator: Optional[Union[str, List[str]]] = None,
+        key_suffix: Optional[str] = None,
     ) -> Dict[str, Any]:
         """List requests with their cost, inputs and outcome, failures included.
 
@@ -101,12 +103,21 @@ class Generations(Namespace):
             sort_by: ``model_created`` (default), ``model_name`` or
                 ``credits_deduction``
             sort_order: ``desc`` (default) or ``asc``
+            initiator: Only requests from these sources, such as ``API``,
+                ``API_V2`` or ``SDK_PY_V2``; a list matches any of them. Either
+                spelling works, ``API_V2`` or ``API-V2``. An unknown source is
+                refused with a 400.
+            key_suffix: Only one API key's requests, by the last 6 characters
+                of the key, lowercase: the ``key_mask`` on each row. The full
+                key is never sent, because a URL ends up in access logs.
 
         Returns:
             Paginated dictionary. Each row carries ``request_id``,
             ``model_name``, ``model_status``, ``credits_deduction`` (cost in
             USD), ``request_body`` (the inputs as sent), ``generation_url``,
-            ``latency_ms``, timestamps and, for failures, ``error``.
+            ``latency_ms``, timestamps, ``initiator``, ``key_mask`` (the last 6
+            characters of the key that made the request, or ``None``), and for
+            failures, ``error``.
         """
         params: Dict[str, Any] = {"page": page, "per_page": per_page}
         optional = {
@@ -118,6 +129,8 @@ class Generations(Namespace):
             "user_email": user_email,
             "sort_by": sort_by,
             "sort_order": sort_order,
+            "initiator": ",".join([initiator] if isinstance(initiator, str) else initiator or []),
+            "key_suffix": key_suffix,
         }
         params.update({key: value for key, value in optional.items() if value})
 

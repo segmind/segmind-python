@@ -2,6 +2,26 @@
 
 All notable changes to the Segmind Python SDK are documented here.
 
+## Unreleased
+
+### Added
+
+- **`generations.history()` filters by source and by key.**
+  - `initiator`: one source or a list, such as `["API", "API_V2"]`, in either
+    spelling (`API_V2` or `API-V2`). An unknown source is refused with a 400.
+  - `key_suffix`: the last 6 characters of an API key, which is the `key_mask`
+    on each row. The full key is never sent, because a URL ends up in access logs.
+  - Both are keyword arguments at the end, so existing positional calls still work.
+- **`webhooks.test(webhook_id)`** sends a `WEBHOOK_TEST` delivery, and
+  **`webhooks.resend(delivery_id)`** sends a past delivery's payload again, by its
+  `id` from `logs()`. Each sends a real delivery, in the background after the call
+  returns.
+
+### Fixed
+
+- **`webhooks.logs()` is annotated as the list it always returned,**
+  `List[Dict[str, Any]]`, not a dictionary. Nothing changes at runtime.
+
 ## 1.4.0 — 2026-11-06
 
 ### Added

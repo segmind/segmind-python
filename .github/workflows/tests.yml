@@ -8,7 +8,9 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # Pinned: the package supports Python 3.8, and ubuntu-latest's newer images
+    # can't install 3.8 or 3.9.
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']

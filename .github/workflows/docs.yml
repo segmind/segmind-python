@@ -8,7 +8,9 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    # Pinned: the docs build on Python 3.9, which ubuntu-latest's newer images
+    # can't install.
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       pages: write

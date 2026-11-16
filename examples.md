@@ -438,6 +438,20 @@ logs = segmind.webhooks.logs("53a5fce9-11b7-4425-91da-47bd6515a8f9")
 print(logs)
 ```
 
+### Test a Webhook and Resend a Delivery
+
+Each call sends a real delivery, in the background after it returns: read
+`logs()` to see how your endpoint answered.
+
+```python
+import segmind
+
+segmind.webhooks.test("53a5fce9-11b7-4425-91da-47bd6515a8f9")
+
+deliveries = segmind.webhooks.logs("53a5fce9-11b7-4425-91da-47bd6515a8f9")
+segmind.webhooks.resend(deliveries[0]["id"])
+```
+
 ## Models
 
 ### Browse the Catalog
@@ -512,6 +526,9 @@ for req in history["data"]:
     print(req["request_id"], req["credits_deduction"], req["request_body"])
 
 one = segmind.generations.get("5708ee2c54894941661597cd38eb68af")
+
+# Only API traffic from one key: pass the key's last 6 characters, its key_mask.
+from_key = segmind.generations.history(initiator=["API", "API_V2"], key_suffix="a1b2c3")
 ```
 
 ## Advanced Usage

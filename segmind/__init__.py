@@ -197,6 +197,14 @@ class _Webhooks:
         """Get webhook logs."""
         return _get_client().webhooks.logs(webhook_id)
 
+    def test(self, webhook_id):
+        """Send a test delivery to a webhook."""
+        return _get_client().webhooks.test(webhook_id)
+
+    def resend(self, delivery_id):
+        """Send a past delivery again."""
+        return _get_client().webhooks.resend(delivery_id)
+
 
 class _Models:
     def list(self, **filters):

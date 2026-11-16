@@ -498,3 +498,43 @@ class TestWebhooks:
         assert result["logs"][0]["retry_count"] == 3
         assert result["logs"][0]["next_retry_at"] == "2024-01-01T10:05:00Z"
         assert result["logs"][0]["error"] == "Internal Server Error"
+
+
+class TestWebhookDeliveries:
+    """test() and resend() each send a real delivery, so each is one POST."""
+
+    BASE = "https://api.spotprod.segmind.com/webhook"
+
+    def _webhooks(self, payload):
+        client = mock.MagicMock()
+        client._request.return_value.json.return_value = payload
+        return Webhooks(client), client
+
+    def test_test_posts_the_webhook_id(self):
+        webhooks, client = self._webhooks({"message": "Webhook test request successful."})
+        assert webhooks.test("wh1") == {"message": "Webhook test request successful."}
+        client._request.assert_called_once_with(
+            "POST", f"{self.BASE}/test", json={"webhook_id": "wh1"}
+        )
+
+    def test_resend_posts_the_delivery_id(self):
+        webhooks, client = self._webhooks({"message": "Webhook retry request successful."})
+        webhooks.resend("d1")
+        client._request.assert_called_once_with(
+            "POST", f"{self.BASE}/resend", json={"webhook_dispatch_id": "d1"}
+        )
+
+    def test_logs_returns_the_list_of_deliveries(self):
+        delivery = {"id": "d1", "success": False, "status_code": 500}
+        webhooks, _ = self._webhooks([delivery])
+        assert webhooks.logs("wh1") == [delivery]
+
+    def test_module_level_test_and_resend_delegate(self):
+        import segmind
+
+        with mock.patch.object(segmind, "_get_client") as get_client:
+            segmind.webhooks.test("wh1")
+            segmind.webhooks.resend("d1")
+
+        get_client.return_value.webhooks.test.assert_called_once_with("wh1")
+        get_client.return_value.webhooks.resend.assert_called_once_with("d1")

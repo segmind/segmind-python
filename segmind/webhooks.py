@@ -93,17 +93,53 @@ class Webhooks(Namespace):
         response = self._client._request("DELETE", url, params=params)
         return response.json()
 
-    def logs(self, webhook_id: str) -> Dict[str, Any]:
-        """Get dispatch logs for a webhook.
+    def logs(self, webhook_id: str) -> List[Dict[str, Any]]:
+        """List every delivery made to a webhook.
 
         Args:
             webhook_id: The ID of the webhook to get logs for
 
         Returns:
-            Dictionary containing the webhook dispatch logs
+            A list of deliveries, each with ``id`` (pass it to :meth:`resend`),
+            ``webhook_url``, ``request_id``, ``event_type``, ``payload``,
+            ``status_code`` (your endpoint's reply, or ``None``),
+            ``response_body``, ``success`` and ``created_ts``.
         """
         url = f"{self.base_url}/dispatch-logs"
 
         params = {"webhook_id": webhook_id}
         response = self._client._request("GET", url, params=params)
+        return response.json()
+
+    def test(self, webhook_id: str) -> Dict[str, Any]:
+        """Send a ``WEBHOOK_TEST`` delivery to an active webhook.
+
+        The delivery goes out in the background after this returns, so read
+        :meth:`logs` to see how your endpoint answered. Each call sends another
+        delivery.
+
+        Args:
+            webhook_id: The ID of the webhook to test
+
+        Returns:
+            Dictionary with the server's ``message``
+        """
+        url = f"{self.base_url}/test"
+        response = self._client._request("POST", url, json={"webhook_id": webhook_id})
+        return response.json()
+
+    def resend(self, delivery_id: str) -> Dict[str, Any]:
+        """Send a past delivery's payload again.
+
+        Refused (406) when the webhook is no longer active. Each call sends
+        another delivery, in the background after this returns.
+
+        Args:
+            delivery_id: The ``id`` of a delivery from :meth:`logs`
+
+        Returns:
+            Dictionary with the server's ``message``
+        """
+        url = f"{self.base_url}/resend"
+        response = self._client._request("POST", url, json={"webhook_dispatch_id": delivery_id})
         return response.json()

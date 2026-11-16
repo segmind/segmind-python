@@ -265,6 +265,24 @@ class TestGenerationsHistory:
             },
         )
 
+    def test_history_sends_initiators_as_one_list_and_a_key_by_its_suffix(self):
+        generations, client = self._generations()
+        generations.history(initiator=["API", "API_V2"], key_suffix="a1b2c3")
+        generations.history(initiator="SDK-PY-V2")
+        generations.history(initiator=[])
+        assert [c.kwargs["params"] for c in client._request.call_args_list] == [
+            {"page": 1, "per_page": 20, "initiator": "API,API_V2", "key_suffix": "a1b2c3"},
+            {"page": 1, "per_page": 20, "initiator": "SDK-PY-V2"},
+            {"page": 1, "per_page": 20},
+        ]
+
+    def test_history_keeps_existing_positional_arguments(self):
+        generations, client = self._generations()
+        generations.history(2, 50)
+        client._request.assert_called_once_with(
+            "GET", self.HISTORY_URL, params={"page": 2, "per_page": 50}
+        )
+
     def test_history_returns_cost_and_inputs(self):
         row = {"request_id": "abc", "credits_deduction": 0.0035, "request_body": "{'prompt': 'fox'}"}
         generations, _ = self._generations({"data": [row]})

@@ -7,14 +7,14 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-deploy:
+  build:
+    # Builds the docs so a broken build fails CI. They aren't published: the
+    # Python docs live at docs.segmind.com.
     # Pinned: the docs build on Python 3.9, which ubuntu-latest's newer images
     # can't install.
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-      pages: write
-      id-token: write
 
     steps:
     - name: Checkout
@@ -35,18 +35,3 @@ jobs:
       run: |
         cd docs
         make html
-
-    - name: Setup Pages
-      if: github.ref == 'refs/heads/main'
-      uses: actions/configure-pages@v5
-
-    - name: Upload artifact
-      if: github.ref == 'refs/heads/main'
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: 'docs/_build/html'
-
-    - name: Deploy to GitHub Pages
-      if: github.ref == 'refs/heads/main'
-      id: deployment
-      uses: actions/deploy-pages@v4

@@ -15,7 +15,8 @@ The generations module supports these operations:
 
 * :meth:`Generations.recent` - Get recent generations for a specific model
 * :meth:`Generations.list` - List all generations with filtering and pagination
-* :meth:`Generations.history` - List requests (failures included) with cost and inputs
+* :meth:`Generations.history` - List requests (failures included) with cost and inputs.
+  From 1.5.0 it filters by source (``initiator``) and by API key (``key_suffix``).
 * :meth:`Generations.get` - Get one request by its ``request_id``
 
 Filtering Options

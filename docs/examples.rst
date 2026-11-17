@@ -261,6 +261,28 @@ Get Webhook Logs
    logs = segmind.webhooks.logs("53a5fce9-11b7-4425-91da-47bd6515a8f9")
    print(logs)
 
+Each entry is one delivery, with ``id``, ``event_type``, ``request_id``,
+``payload``, ``status_code`` (``None`` if your endpoint never answered),
+``response_body``, ``success`` and ``created_ts``.
+
+Test and Resend Deliveries
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Both send a real delivery to your endpoint and require segmind 1.5.0 or later.
+
+.. code-block:: python
+
+   import segmind
+
+   segmind.webhooks.test("53a5fce9-11b7-4425-91da-47bd6515a8f9")
+
+   deliveries = segmind.webhooks.logs("53a5fce9-11b7-4425-91da-47bd6515a8f9")
+   failed = [d for d in deliveries if not d["success"]]
+   if failed:
+       segmind.webhooks.resend(failed[0]["id"])
+
+``resend`` is refused with a 406 when the webhook is no longer active.
+
 .. _examples:models:
 
 Models
@@ -381,6 +403,13 @@ included — and ``generations.get()`` fetches one of your own requests by id.
        print(req["request_id"], req["credits_deduction"], req["request_body"])
 
    one = segmind.generations.get("5708ee2c54894941661597cd38eb68af")
+
+   # Only API calls, made with the key ending in a1b2c3 (segmind 1.5.0 and later).
+   # The full key is never sent; key_suffix matches each row's key_mask.
+   from_key = segmind.generations.history(
+       initiator=["API", "API_V2"],
+       key_suffix="a1b2c3",
+   )
 
 .. _examples:pixelflows:
 

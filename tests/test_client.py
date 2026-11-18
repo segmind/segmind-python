@@ -593,7 +593,7 @@ class TestApiKeyHostGuard:
         [
             "https://api.segmind.com/v2/requests/abc/status",
             "https://api.spotprod.segmind.com/webhook/get",
-            "https://workflows-api.segmind.com/upload-asset",
+            "https://platform-api.segmind.com/upload-asset/presign",
             "/flux-schnell",
         ],
     )

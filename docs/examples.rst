@@ -312,8 +312,9 @@ List All Models
 Files (Segmind Storage)
 -----------------------
 
-Upload files to Segmind Storage and receive persistent URLs that can be reused
-across model runs and PixelFlow workflows.
+Upload files to your Segmind asset library and receive persistent URLs that can
+be reused across model runs and PixelFlow workflows. Each file is streamed
+straight to storage, so large videos are never held in memory.
 
 .. code-block:: python
 

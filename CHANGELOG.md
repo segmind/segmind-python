@@ -2,7 +2,7 @@
 
 All notable changes to the Segmind Python SDK are documented here.
 
-## Unreleased
+## 1.5.1 — 2026-11-18
 
 ### Changed
 

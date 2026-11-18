@@ -47,7 +47,7 @@ from segmind.v2 import (
     InferenceTimeout,
 )
 
-__version__ = "1.5.0"
+__version__ = "1.5.1"
 
 # Default client (lazily initialized)
 _default_client: Optional[SegmindClient] = None

@@ -139,7 +139,7 @@ result = segmind.pixelflows.run(
 ```python
 import segmind
 
-# Upload a file to Segmind Storage
+# Upload a file to your asset library; it streams from disk, so large videos are fine
 result = segmind.files.upload("path/to/image.png")
 print(result["file_urls"][0])
 # https://images.segmind.com/assets/...

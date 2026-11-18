@@ -2,6 +2,22 @@
 
 All notable changes to the Segmind Python SDK are documented here.
 
+## Unreleased
+
+### Changed
+
+- **`files.upload()` streams each file from disk instead of reading it into
+  memory.** A file used to be read whole, base64-encoded and posted as JSON,
+  which held about twice its size in memory. Now each file is presigned on the
+  asset library at `https://platform-api.segmind.com`, PUT straight to storage
+  a megabyte at a time, then confirmed. The return value is unchanged:
+  `{"message": ..., "file_urls": [...]}`, with permanent URLs in your asset library.
+  - Files are stored as they are. The old route re-encoded images on the server.
+  - `.mov`, `.avi` and `.mkv` uploads now work; the old route refused them.
+  - A refused file raises `SegmindError` with the HTTP status. In a list, the
+    files before the one that failed stay uploaded.
+  - `Files.STORAGE_BASE_URL` is replaced by `Files.ASSETS_BASE_URL`.
+
 ## 1.5.0 — 2026-11-17
 
 ### Added

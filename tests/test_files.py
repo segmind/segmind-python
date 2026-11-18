@@ -1,13 +1,23 @@
 """Comprehensive tests for the Files module."""
 
+import json
+import sys
 import tempfile
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from unittest import mock
 
 import httpx
 import pytest
+import respx
 
+from segmind.client import SegmindClient
+from segmind.exceptions import SegmindError
 from segmind.files import Files
+
+# `segmind.files` the attribute is the module-level namespace; this is the module.
+files_module = sys.modules["segmind.files"]
 
 
 class TestFiles:
@@ -56,103 +66,7 @@ class TestFiles:
         yield temp_path
         temp_path.unlink(missing_ok=True)
 
-    @pytest.fixture
-    def sample_upload_response(self):
-        """Sample upload response for testing."""
-        return {
-            "status": "success",
-            "file_id": "file_123456",
-            "filename": "test_image.png",
-            "url": "https://cdn.segmind.com/files/file_123456",
-            "size": 1024,
-            "content_type": "image/png",
-            "uploaded_at": "2024-01-01T00:00:00Z"
-        }
-
     # ==================== Test upload() method ====================
-
-    def test_upload_image_success(self, files, mock_client, temp_image_file, sample_upload_response):
-        """Test successful image upload."""
-        mock_response = mock.MagicMock()
-        mock_response.json.return_value = sample_upload_response
-        mock_client._request.return_value = mock_response
-
-        result = files.upload(temp_image_file)
-
-        assert result["status"] == "success"
-        assert result["file_id"] == "file_123456"
-        assert result["content_type"] == "image/png"
-
-        # Verify the request was made correctly with new API
-        mock_client._request.assert_called_once_with(
-            "POST",
-            "https://workflows-api.segmind.com/upload-asset",
-            json=mock.ANY,
-            headers={
-                "accept": "application/json, text/plain, */*",
-                "content-type": "application/json"
-            }
-        )
-
-        # Check that json parameter with data_urls was passed
-        call_args = mock_client._request.call_args
-        assert "json" in call_args[1]
-        assert "data_urls" in call_args[1]["json"]
-        # Check it's a base64-encoded data URL
-        assert call_args[1]["json"]["data_urls"][0].startswith("data:image/png;base64,")
-
-    def test_upload_audio_success(self, files, mock_client, temp_audio_file):
-        """Test successful audio file upload."""
-        mock_response = mock.MagicMock()
-        mock_response.json.return_value = {
-            "status": "success",
-            "file_id": "audio_123",
-            "content_type": "audio/mpeg"
-        }
-        mock_client._request.return_value = mock_response
-
-        result = files.upload(temp_audio_file)
-
-        assert result["status"] == "success"
-        assert result["file_id"] == "audio_123"
-        assert result["content_type"] == "audio/mpeg"
-
-    def test_upload_video_success(self, files, mock_client, temp_video_file):
-        """Test successful video file upload."""
-        mock_response = mock.MagicMock()
-        mock_response.json.return_value = {
-            "status": "success",
-            "file_id": "video_456",
-            "content_type": "video/mp4"
-        }
-        mock_client._request.return_value = mock_response
-
-        result = files.upload(temp_video_file)
-
-        assert result["status"] == "success"
-        assert result["file_id"] == "video_456"
-
-    def test_upload_with_string_path(self, files, mock_client, temp_image_file, sample_upload_response):
-        """Test upload with string file path."""
-        mock_response = mock.MagicMock()
-        mock_response.json.return_value = sample_upload_response
-        mock_client._request.return_value = mock_response
-
-        result = files.upload(str(temp_image_file))
-
-        assert result["status"] == "success"
-        mock_client._request.assert_called_once()
-
-    def test_upload_with_pathlib_path(self, files, mock_client, temp_image_file, sample_upload_response):
-        """Test upload with pathlib.Path object."""
-        mock_response = mock.MagicMock()
-        mock_response.json.return_value = sample_upload_response
-        mock_client._request.return_value = mock_response
-
-        result = files.upload(temp_image_file)
-
-        assert result["status"] == "success"
-        mock_client._request.assert_called_once()
 
     def test_upload_file_not_found(self, files):
         """Test upload with non-existent file."""
@@ -178,47 +92,6 @@ class TestFiles:
         try:
             with pytest.raises(ValueError, match="File is not a supported media format"):
                 files.upload(temp_path)
-        finally:
-            temp_path.unlink(missing_ok=True)
-
-    def test_upload_network_error(self, files, mock_client, temp_image_file):
-        """Test upload with network error."""
-        mock_client._request.side_effect = httpx.NetworkError("Connection failed")
-
-        with pytest.raises(httpx.NetworkError):
-            files.upload(temp_image_file)
-
-    def test_upload_api_error(self, files, mock_client, temp_image_file):
-        """Test upload with API error response."""
-        mock_client._request.side_effect = httpx.HTTPStatusError(
-            "Upload failed",
-            request=mock.MagicMock(),
-            response=mock.MagicMock(status_code=413)  # Payload too large
-        )
-
-        with pytest.raises(httpx.HTTPStatusError):
-            files.upload(temp_image_file)
-
-    def test_upload_large_file(self, files, mock_client, sample_upload_response):
-        """Test upload of a large file."""
-        # Create a larger temporary file
-        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as f:
-            large_data = b'\x89PNG\r\n\x1a\n' + b'\x00' * 10000  # 10KB of data
-            f.write(large_data)
-            temp_path = Path(f.name)
-
-        try:
-            mock_response = mock.MagicMock()
-            mock_response.json.return_value = {
-                **sample_upload_response,
-                "size": 10008
-            }
-            mock_client._request.return_value = mock_response
-
-            result = files.upload(temp_path)
-
-            assert result["size"] == 10008
-            mock_client._request.assert_called_once()
         finally:
             temp_path.unlink(missing_ok=True)
 
@@ -326,177 +199,213 @@ class TestFiles:
         finally:
             temp_path.unlink(missing_ok=True)
 
-    # ==================== Integration Tests ====================
 
-    def test_upload_file_with_special_characters_in_name(self, files, mock_client, sample_upload_response):
-        """Test upload with special characters in filename."""
-        with tempfile.NamedTemporaryFile(suffix='.png', prefix='file with spaces & symbols!', delete=False) as f:
-            f.write(b'\x89PNG\r\n\x1a\n')
-            temp_path = Path(f.name)
+ASSETS = "https://platform-api.segmind.com"
+PNG = b"\x89PNG\r\n\x1a\n\x01\x02\x03"
 
-        try:
-            mock_response = mock.MagicMock()
-            mock_response.json.return_value = sample_upload_response
-            mock_client._request.return_value = mock_response
 
-            result = files.upload(temp_path)
+def asset_ticket(filename):
+    """`POST /upload-asset/presign` on the asset library, as production returns it."""
+    key = f"assets/u1@test.dev/0f3a-{filename}"
+    return {
+        "presignedUrl": f"https://segmind-nodes-assets.s3.us-east-1.amazonaws.com/{key}"
+        "?X-Amz-SignedHeaders=content-length%3Bcontent-type%3Bhost&X-Amz-Signature=sig",
+        "s3Key": key,
+        "publicUrl": f"https://images.segmind.com/{key}",
+        "filename": filename,
+        "contentType": "image/png",
+        "size": 11,
+        "tags": [],
+    }
 
-            assert result["status"] == "success"
 
-            # Verify the request was made with new API (base64 encoding)
-            call_args = mock_client._request.call_args
-            assert "json" in call_args[1]
-            assert "data_urls" in call_args[1]["json"]
-            # Should still process files with special characters in name
-            assert len(call_args[1]["json"]["data_urls"]) == 1
-        finally:
-            temp_path.unlink(missing_ok=True)
+def write(tmp_path, name, content):
+    path = tmp_path / name
+    path.write_bytes(content)
+    return path
 
-    def test_upload_file_content_verification(self, files, mock_client, sample_upload_response):
-        """Test that file content is read correctly during upload."""
-        test_content = b"test image content"
-        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as f:
-            f.write(test_content)
-            temp_path = Path(f.name)
 
-        try:
-            mock_response = mock.MagicMock()
-            mock_response.json.return_value = sample_upload_response
-            mock_client._request.return_value = mock_response
+class TestUploadToAssetLibrary:
+    """`files.upload` presigns, streams the file to storage, then confirms it."""
 
-            # Mock the file reading to verify content
-            with mock.patch('builtins.open', mock.mock_open(read_data=test_content)) as mock_file:
-                result = files.upload(temp_path)
+    @pytest.fixture
+    def client(self):
+        return SegmindClient(api_key="sk-test")
 
-            assert result["status"] == "success"
-            mock_file.assert_called_once_with(temp_path, "rb")
-        finally:
-            temp_path.unlink(missing_ok=True)
+    @pytest.fixture
+    def router(self):
+        with respx.mock(assert_all_called=False) as router:
+            yield router
 
-    def test_upload_multiple_files_sequentially(self, files, mock_client):
-        """Test uploading multiple files in sequence."""
-        # Create multiple test files
-        files_to_test = []
-        for i, ext in enumerate(['.png', '.jpg', '.mp3']):
-            with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as f:
-                f.write(b"test content " + str(i).encode())
-                files_to_test.append(Path(f.name))
+    def mock_upload(self, router, filename, asset_url=None, put_status=200):
+        """Routes one presign, PUT and confirm; returns what the PUT carried."""
+        ticket = asset_ticket(filename)
+        sent = {}
 
-        try:
-            # Mock responses for each upload
-            mock_responses = []
-            for i, file_path in enumerate(files_to_test):
-                mock_resp = mock.MagicMock()
-                mock_resp.json.return_value = {
-                    "status": "success",
-                    "file_id": f"file_{i}",
-                    "filename": file_path.name
-                }
-                mock_responses.append(mock_resp)
+        def on_put(request):
+            sent["headers"] = request.headers
+            sent["body"] = request.read()
+            return httpx.Response(put_status, text="" if put_status == 200 else "<Error>Denied</Error>")
 
-            mock_client._request.side_effect = mock_responses
-
-            # Upload all files
-            results = []
-            for file_path in files_to_test:
-                result = files.upload(file_path)
-                results.append(result)
-
-            # Verify all uploads succeeded
-            for i, result in enumerate(results):
-                assert result["status"] == "success"
-                assert result["file_id"] == f"file_{i}"
-
-            assert mock_client._request.call_count == 3
-        finally:
-            for file_path in files_to_test:
-                file_path.unlink(missing_ok=True)
-
-    def test_upload_response_json_parsing_error(self, files, mock_client, temp_image_file):
-        """Test handling of JSON parsing errors in upload response."""
-        mock_response = mock.MagicMock()
-        mock_response.json.side_effect = ValueError("Invalid JSON response")
-        mock_client._request.return_value = mock_response
-
-        with pytest.raises(ValueError, match="Invalid JSON response"):
-            files.upload(temp_image_file)
-
-    def test_upload_with_empty_file(self, files, mock_client):
-        """Test upload with empty file."""
-        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as f:
-            # Write no content, creating an empty file
-            temp_path = Path(f.name)
-
-        try:
-            mock_response = mock.MagicMock()
-            mock_response.json.return_value = {
-                "status": "success",
-                "file_id": "empty_file",
-                "size": 0
-            }
-            mock_client._request.return_value = mock_response
-
-            result = files.upload(temp_path)
-
-            assert result["status"] == "success"
-            assert result["size"] == 0
-        finally:
-            temp_path.unlink(missing_ok=True)
-
-    # ==================== Error Handling Edge Cases ====================
-
-    def test_upload_with_permission_error(self, files):
-        """Test upload when file cannot be read due to permissions."""
-        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as f:
-            f.write(b"content")
-            temp_path = Path(f.name)
-
-        try:
-            # Mock permission error during file opening
-            with mock.patch(
-                'builtins.open', side_effect=PermissionError("Permission denied")
-            ), pytest.raises(PermissionError):
-                files.upload(temp_path)
-        finally:
-            temp_path.unlink(missing_ok=True)
-
-    def test_upload_api_url_construction(self, files, mock_client, temp_image_file, sample_upload_response):
-        """Test that the correct API URL is used for upload."""
-        mock_response = mock.MagicMock()
-        mock_response.json.return_value = sample_upload_response
-        mock_client._request.return_value = mock_response
-
-        files.upload(temp_image_file)
-
-        # Verify new API endpoint is used
-        mock_client._request.assert_called_once_with(
-            "POST",
-            "https://workflows-api.segmind.com/upload-asset",
-            json=mock.ANY,
-            headers={
-                "accept": "application/json, text/plain, */*",
-                "content-type": "application/json"
-            }
+        router.post(f"{ASSETS}/upload-asset/presign", json__filename=filename).mock(
+            return_value=httpx.Response(200, json=ticket)
         )
+        router.put(ticket["presignedUrl"]).mock(side_effect=on_put)
+        router.post(f"{ASSETS}/upload-asset/confirm", json__filename=filename).mock(
+            return_value=httpx.Response(200, json={"asset": {"url": asset_url or ticket["publicUrl"]}})
+        )
+        return ticket, sent
 
-    @pytest.mark.parametrize("file_size", [1, 100, 1000, 10000])
-    def test_upload_various_file_sizes(self, files, mock_client, sample_upload_response, file_size):
-        """Test upload with various file sizes."""
-        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as f:
-            f.write(b'\x89PNG\r\n\x1a\n' + b'\x00' * file_size)
-            temp_path = Path(f.name)
+    def test_presigns_streams_and_confirms(self, client, router, tmp_path):
+        path = write(tmp_path, "logo.png", PNG)
+        ticket, sent = self.mock_upload(router, "logo.png")
 
+        result = client.files.upload(path)
+
+        assert result == {"message": "Files uploaded successfully", "file_urls": [ticket["publicUrl"]]}
+        presign, put, confirm = router.calls
+        assert json.loads(presign.request.content) == {"filename": "logo.png", "contentType": "image/png", "size": 11}
+        assert presign.request.headers["x-api-key"] == "sk-test"
+        assert put.request.method == "PUT"
+        assert sent["body"] == PNG
+        assert sent["headers"]["content-type"] == "image/png"
+        assert sent["headers"]["content-length"] == "11"
+        assert "transfer-encoding" not in sent["headers"]
+        assert json.loads(confirm.request.content) == {
+            "s3Key": ticket["s3Key"],
+            "publicUrl": ticket["publicUrl"],
+            "contentType": "image/png",
+            "filename": "logo.png",
+        }
+        assert confirm.request.headers["x-api-key"] == "sk-test"
+
+    def test_never_sends_the_key_or_sdk_headers_to_storage(self, client, router, tmp_path):
+        path = write(tmp_path, "logo.png", PNG)
+        _, sent = self.mock_upload(router, "logo.png")
+        client.files.upload(path)
+        assert "x-api-key" not in sent["headers"]
+        assert "x-initiator" not in sent["headers"]
+        assert "segmind" not in sent["headers"].get("user-agent", "")
+
+    def test_reads_the_file_a_chunk_at_a_time(self, client, router, tmp_path, monkeypatch):
+        content = bytes(range(10)) * 3
+        path = write(tmp_path, "clip.mp4", content)
+        _, sent = self.mock_upload(router, "clip.mp4")
+        chunks = []
+        read_chunks = files_module._read_chunks
+
+        def spy(p, size):
+            for chunk in read_chunks(p, size):
+                chunks.append(chunk)
+                yield chunk
+
+        monkeypatch.setattr(files_module, "_CHUNK_SIZE", 8)
+        monkeypatch.setattr(files_module, "_read_chunks", spy)
+        client.files.upload(path)
+
+        assert [len(c) for c in chunks] == [8, 8, 8, 6]
+        assert sent["body"] == content
+        assert sent["headers"]["content-length"] == "30"
+
+    def test_returns_the_confirmed_url(self, client, router, tmp_path):
+        path = write(tmp_path, "logo.png", PNG)
+        self.mock_upload(router, "logo.png", asset_url="https://images.segmind.com/assets/u1/renamed.png")
+        assert client.files.upload(path)["file_urls"] == ["https://images.segmind.com/assets/u1/renamed.png"]
+
+    def test_uploads_a_list_in_order(self, client, router, tmp_path):
+        first = write(tmp_path, "a.png", PNG)
+        second = write(tmp_path, "b.mp3", b"\xff\xfb\x90\x00")
+        a, _ = self.mock_upload(router, "a.png")
+        b, _ = self.mock_upload(router, "b.mp3")
+
+        result = client.files.upload([str(first), second])
+
+        assert result["file_urls"] == [a["publicUrl"], b["publicUrl"]]
+        presigns = [json.loads(c.request.content) for c in router.calls if c.request.url.path.endswith("presign")]
+        assert presigns == [
+            {"filename": "a.png", "contentType": "image/png", "size": 11},
+            {"filename": "b.mp3", "contentType": "audio/mpeg", "size": 4},
+        ]
+
+    def test_checks_every_file_before_uploading_any(self, client, router, tmp_path):
+        good = write(tmp_path, "a.png", PNG)
+        bad = write(tmp_path, "notes.txt", b"hello")
+        with pytest.raises(ValueError, match="not a supported media format"):
+            client.files.upload([good, bad])
+        assert router.calls.call_count == 0
+
+    def test_a_refused_put_raises_and_is_not_confirmed(self, client, router, tmp_path):
+        path = write(tmp_path, "logo.png", PNG)
+        self.mock_upload(router, "logo.png", put_status=403)
+        with pytest.raises(SegmindError) as raised:
+            client.files.upload(path)
+        assert raised.value.status == 403
+        assert not any(c.request.url.path.endswith("confirm") for c in router.calls)
+
+    def test_a_refused_presign_raises_before_any_put(self, client, router, tmp_path):
+        path = write(tmp_path, "logo.png", PNG)
+        router.post(f"{ASSETS}/upload-asset/presign").mock(
+            return_value=httpx.Response(400, json={"error": "File type not allowed: image/png"})
+        )
+        with pytest.raises(SegmindError) as raised:
+            client.files.upload(path)
+        assert raised.value.status == 400
+        assert router.calls.call_count == 1
+
+    def test_an_incomplete_ticket_raises(self, client, router, tmp_path):
+        path = write(tmp_path, "logo.png", PNG)
+        router.post(f"{ASSETS}/upload-asset/presign").mock(return_value=httpx.Response(200, json={"s3Key": "k"}))
+        with pytest.raises(SegmindError, match="presignedUrl"):
+            client.files.upload(path)
+        assert router.calls.call_count == 1
+
+
+class TestUploadOverTheWire:
+    """A real httpx client against a local server: the body arrives whole, not chunked."""
+
+    def test_streams_a_file_with_its_exact_length(self, tmp_path, monkeypatch):
+        content = bytes(i % 251 for i in range(3 * 1024 * 1024 + 17))
+        path = write(tmp_path, "clip.mp4", content)
+        received = {}
+
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *args):
+                pass
+
+            def do_POST(self):  # noqa: N802 (http.server names the handler)
+                body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+                if self.path == "/upload-asset/presign":
+                    received["presign"] = body
+                    reply = {"presignedUrl": f"{origin}/put/clip.mp4", "s3Key": "assets/u1/clip.mp4",
+                             "publicUrl": "https://images.test/assets/u1/clip.mp4"}
+                else:
+                    reply = {"asset": {"url": "https://images.test/assets/u1/clip.mp4"}}
+                data = json.dumps(reply).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+
+            def do_PUT(self):  # noqa: N802 (http.server names the handler)
+                received["put_headers"] = dict(self.headers)
+                received["put_body"] = self.rfile.read(int(self.headers["Content-Length"]))
+                self.send_response(200)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+
+        server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        origin = f"http://127.0.0.1:{server.server_address[1]}"
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        monkeypatch.setattr(Files, "ASSETS_BASE_URL", origin)
         try:
-            mock_response = mock.MagicMock()
-            mock_response.json.return_value = {
-                **sample_upload_response,
-                "size": file_size + 8  # PNG header + data
-            }
-            mock_client._request.return_value = mock_response
-
-            result = files.upload(temp_path)
-
-            assert result["status"] == "success"
-            assert result["size"] == file_size + 8
+            result = SegmindClient(api_key="sk-test").files.upload(path)
         finally:
-            temp_path.unlink(missing_ok=True)
+            server.shutdown()
+            server.server_close()
+
+        assert result["file_urls"] == ["https://images.test/assets/u1/clip.mp4"]
+        assert received["presign"] == {"filename": "clip.mp4", "contentType": "video/mp4", "size": len(content)}
+        assert received["put_headers"]["Content-Length"] == str(len(content))
+        assert "Transfer-Encoding" not in received["put_headers"]
+        assert received["put_body"] == content

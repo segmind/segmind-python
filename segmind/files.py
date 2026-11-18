@@ -1,8 +1,23 @@
-import base64
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, Iterator, List, Union
 
+import httpx
+
+from segmind.exceptions import SegmindError, raise_for_status
 from segmind.resource import Namespace
+
+# How much of a file is held in memory at once while it uploads.
+_CHUNK_SIZE = 1024 * 1024
+
+
+def _read_chunks(path: Path, chunk_size: int) -> Iterator[bytes]:
+    """Yields a file's bytes a chunk at a time, so the whole file is never in memory."""
+    with open(path, "rb") as f:
+        while True:
+            chunk = f.read(chunk_size)
+            if not chunk:
+                return
+            yield chunk
 
 
 class Files(Namespace):
@@ -12,26 +27,30 @@ class Files(Namespace):
     persistent URLs that can be used across multiple model runs.
     """
 
-    STORAGE_BASE_URL = "https://workflows-api.segmind.com"
+    # The asset library API. Uploads land in the caller's asset library.
+    ASSETS_BASE_URL = "https://platform-api.segmind.com"
 
     def upload(self, file_paths: Union[str, Path, List[Union[str, Path]]]) -> Dict[str, Any]:
-        """Upload one or more media files to Segmind Storage.
+        """Upload one or more media files to your Segmind asset library.
 
-        Uses the Segmind Storage API to upload files as base64-encoded data URLs
-        and returns persistent URLs that can be reused across model runs.
+        Each file goes straight to storage on a presigned URL, streamed from
+        disk, so a large video is never held in memory. The returned URLs are
+        public and do not expire.
 
         Args:
             file_paths: Single file path or list of file paths to upload.
-                       Supports images (JPEG, PNG, WebP, etc.)
+                       Supports images, audio and video.
 
         Returns:
             Dictionary containing:
-                - file_urls: List of persistent storage URLs for the uploaded files
+                - file_urls: List of persistent storage URLs, in the order given
                 - message: Success message
 
         Raises:
             FileNotFoundError: If any file doesn't exist
             ValueError: If any file is not a supported media format
+            SegmindError: If the asset library or storage refuses a file. Files
+                earlier in the list stay uploaded.
 
         Example:
             >>> client = SegmindClient(api_key="...")
@@ -49,39 +68,55 @@ class Files(Namespace):
         if isinstance(file_paths, (str, Path)):
             file_paths = [file_paths]
 
-        data_urls = []
-        for file_path in file_paths:
-            file_path = Path(file_path)
-            content_type = self._get_content_type(file_path)
-            data_url = self._file_to_data_url(file_path, content_type)
-            data_urls.append(data_url)
+        # Check every file before uploading any of them.
+        files = [(Path(p), self._get_content_type(Path(p))) for p in file_paths]
+        file_urls = [self._upload_one(path, content_type) for path, content_type in files]
+        return {"message": "Files uploaded successfully", "file_urls": file_urls}
 
-        url = f"{self.STORAGE_BASE_URL}/upload-asset"
-        response = self._client._request(
+    def _upload_one(self, path: Path, content_type: str) -> str:
+        """Presign, PUT the bytes, then confirm to register the file in the asset library."""
+        size = path.stat().st_size
+        ticket = self._client._request(
             "POST",
-            url,
-            json={"data_urls": data_urls},
-            headers={
-                "accept": "application/json, text/plain, */*",
-                "content-type": "application/json",
+            f"{self.ASSETS_BASE_URL}/upload-asset/presign",
+            json={"filename": path.name, "contentType": content_type, "size": size},
+        ).json()
+        if not all(ticket.get(key) for key in ("presignedUrl", "s3Key", "publicUrl")):
+            raise SegmindError(
+                detail="the asset presign response had no presignedUrl, s3Key or publicUrl"
+            )
+
+        self._put(ticket["presignedUrl"], path, content_type, size)
+
+        # Confirming upserts on the key, so a repeated confirm cannot register the file twice.
+        confirmed = self._client._request(
+            "POST",
+            f"{self.ASSETS_BASE_URL}/upload-asset/confirm",
+            json={
+                "s3Key": ticket["s3Key"],
+                "publicUrl": ticket["publicUrl"],
+                "contentType": content_type,
+                "filename": path.name,
             },
-        )
-        return response.json()
+        ).json()
+        return (confirmed.get("asset") or {}).get("url") or ticket["publicUrl"]
 
-    def _file_to_data_url(self, file_path: Path, content_type: str) -> str:
-        """Convert a file to a base64-encoded data URL.
+    def _put(self, url: str, path: Path, content_type: str, size: int) -> None:
+        """Streams the file to a presigned URL.
 
-        Args:
-            file_path: Path to the file
-            content_type: MIME type of the file
-
-        Returns:
-            Base64-encoded data URL string (e.g., "data:image/jpeg;base64,...")
+        The URL signs Content-Type and Content-Length, so both must match the
+        presign. Setting Content-Length also keeps httpx from sending the body
+        chunked, which a presigned PUT refuses. A separate client sends no API
+        key or SDK headers to the storage host.
         """
-        with open(file_path, "rb") as f:
-            file_content = f.read()
-        base64_content = base64.b64encode(file_content).decode("utf-8")
-        return f"data:{content_type};base64,{base64_content}"
+        timeout = httpx.Timeout(self._client.timeout, connect=5.0)
+        with httpx.Client(timeout=timeout) as storage:
+            response = storage.put(
+                url,
+                content=_read_chunks(path, _CHUNK_SIZE),
+                headers={"Content-Type": content_type, "Content-Length": str(size)},
+            )
+        raise_for_status(response)
 
     # -------------------------------------------------------------------------
     # Legacy upload method (deprecated)

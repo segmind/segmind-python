@@ -10,7 +10,7 @@ jobs:
   test:
     # Pinned: the package supports Python 3.8, and ubuntu-latest's newer images
     # can't install 3.8 or 3.9.
-    runs-on: ubuntu-24.04
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
@@ -38,7 +38,7 @@ jobs:
         python -m pytest tests/ --cov=segmind --cov-report=term-missing
 
   pre-commit:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     steps:
     - name: Checkout
       uses: actions/checkout@v4

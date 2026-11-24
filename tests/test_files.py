@@ -118,6 +118,7 @@ class TestFiles:
         (".xbm", "image/x-xbitmap"),
         # Audio formats
         (".mp3", "audio/mpeg"),
+        (".wav", "audio/wav"),
         (".aiff", "audio/aiff"),
         (".wma", "audio/x-ms-wma"),
         (".au", "audio/basic"),
@@ -146,7 +147,7 @@ class TestFiles:
 
     def test_get_content_type_case_insensitive(self, files):
         """Test that file extension matching is case insensitive."""
-        extensions_to_test = [".PNG", ".JPG", ".MP4", ".Mp3", ".WeBp"]
+        extensions_to_test = [".PNG", ".JPG", ".MP4", ".Mp3", ".WAV", ".WeBp"]
 
         for ext in extensions_to_test:
             with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as f:

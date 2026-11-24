@@ -340,7 +340,7 @@ straight to storage, so large videos are never held in memory.
 Supported formats:
 
 * **Images**: png, jpg, jpeg, gif, bmp, webp, svg, ico, tif, tiff, jfif, pjp, apng, svgz, heif, heic, xbm
-* **Audio**: mp3, aiff, wma, au
+* **Audio**: mp3, wav, aiff, wma, au
 * **Video**: mp4, avi, mov, mkv, wmv, flv, webm, mpeg, mpg
 
 .. _examples:generations:

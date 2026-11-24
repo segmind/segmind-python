@@ -17,7 +17,7 @@ The SDK supports a wide range of file formats:
   PNG, JPG, JPEG, GIF, BMP, WebP, SVG, ICO, TIF, TIFF, JFIF, PJP, APNG, SVGZ, HEIF, HEIC, XBM
 
 **Audio**
-  MP3, AIFF, WMA, AU
+  MP3, WAV, AIFF, WMA, AU
 
 **Video**
   MP4, AVI, MOV, MKV, WMV, FLV, WebM, MPEG, MPG

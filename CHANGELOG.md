@@ -2,6 +2,13 @@
 
 All notable changes to the Segmind Python SDK are documented here.
 
+## Unreleased
+
+### Fixed
+
+- **`files.upload()` accepts `.wav`.** The asset library takes it, but the SDK
+  raised `ValueError` before sending anything.
+
 ## 1.5.1 — 2026-11-18
 
 ### Changed

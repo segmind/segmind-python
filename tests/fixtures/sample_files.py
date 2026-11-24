@@ -241,6 +241,7 @@ def sample_file_formats():
         '.xbm': 'image/x-xbitmap',
         # Audio formats
         '.mp3': 'audio/mpeg',
+        '.wav': 'audio/wav',
         '.aiff': 'audio/aiff',
         '.wma': 'audio/x-ms-wma',
         '.au': 'audio/basic',

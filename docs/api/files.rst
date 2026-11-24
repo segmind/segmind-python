@@ -14,13 +14,13 @@ Supported File Types
 The SDK supports a wide range of file formats:
 
 **Images**
-  PNG, JPG, JPEG, GIF, BMP, WebP, SVG, ICO, TIF, TIFF, JFIF, PJP, APNG, SVGZ, HEIF, HEIC, XBM
+  PNG, JPG, JPEG, GIF, BMP, WebP, AVIF, TIF, TIFF, JFIF, PJP
 
 **Audio**
-  MP3, WAV, AIFF, WMA, AU
+  MP3, WAV, OGG, FLAC, AAC, M4A
 
 **Video**
-  MP4, AVI, MOV, MKV, WMV, FLV, WebM, MPEG, MPG
+  MP4, AVI, MOV, MKV, WMV, FLV, WebM
 
 File Management
 ---------------

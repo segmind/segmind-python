@@ -163,6 +163,8 @@ class Files(Namespace):
             FileNotFoundError: If the file doesn't exist
             ValueError: If the path is not a file or format is not supported
         """
+        # What the asset library accepts. It refuses any other type with a 400, so a
+        # type added here has to be one it takes.
         content_types = {
             # Image formats
             ".png": "image/png",
@@ -171,33 +173,26 @@ class Files(Namespace):
             ".gif": "image/gif",
             ".bmp": "image/bmp",
             ".webp": "image/webp",
-            ".svg": "image/svg+xml",
-            ".ico": "image/x-icon",
+            ".avif": "image/avif",
             ".tif": "image/tiff",
             ".tiff": "image/tiff",
             ".jfif": "image/jpeg",
             ".pjp": "image/jpeg",
-            ".apng": "image/apng",
-            ".svgz": "image/svg+xml",
-            ".heif": "image/heif",
-            ".heic": "image/heic",
-            ".xbm": "image/x-xbitmap",
             # Audio formats
             ".mp3": "audio/mpeg",
             ".wav": "audio/wav",
-            ".aiff": "audio/aiff",
-            ".wma": "audio/x-ms-wma",
-            ".au": "audio/basic",
+            ".ogg": "audio/ogg",
+            ".flac": "audio/flac",
+            ".aac": "audio/aac",
+            ".m4a": "audio/mp4",
             # Video formats
             ".mp4": "video/mp4",
             ".avi": "video/x-msvideo",
             ".mov": "video/quicktime",
             ".mkv": "video/x-matroska",
-            ".wmv": "video/x-ms-wmv",
-            ".flv": "video/x-flv",
+            ".wmv": "video/wmv",
+            ".flv": "video/flv",
             ".webm": "video/webm",
-            ".mpeg": "video/mpeg",
-            ".mpg": "video/mpeg",
         }
 
         if not file_path.exists():

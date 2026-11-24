@@ -105,33 +105,26 @@ class TestFiles:
         (".gif", "image/gif"),
         (".bmp", "image/bmp"),
         (".webp", "image/webp"),
-        (".svg", "image/svg+xml"),
-        (".ico", "image/x-icon"),
+        (".avif", "image/avif"),
         (".tif", "image/tiff"),
         (".tiff", "image/tiff"),
         (".jfif", "image/jpeg"),
         (".pjp", "image/jpeg"),
-        (".apng", "image/apng"),
-        (".svgz", "image/svg+xml"),
-        (".heif", "image/heif"),
-        (".heic", "image/heic"),
-        (".xbm", "image/x-xbitmap"),
         # Audio formats
         (".mp3", "audio/mpeg"),
         (".wav", "audio/wav"),
-        (".aiff", "audio/aiff"),
-        (".wma", "audio/x-ms-wma"),
-        (".au", "audio/basic"),
+        (".ogg", "audio/ogg"),
+        (".flac", "audio/flac"),
+        (".aac", "audio/aac"),
+        (".m4a", "audio/mp4"),
         # Video formats
         (".mp4", "video/mp4"),
         (".avi", "video/x-msvideo"),
         (".mov", "video/quicktime"),
         (".mkv", "video/x-matroska"),
-        (".wmv", "video/x-ms-wmv"),
-        (".flv", "video/x-flv"),
+        (".wmv", "video/wmv"),
+        (".flv", "video/flv"),
         (".webm", "video/webm"),
-        (".mpeg", "video/mpeg"),
-        (".mpg", "video/mpeg"),
     ])
     def test_get_content_type_supported_formats(self, files, extension, expected_content_type):
         """Test _get_content_type with all supported file formats."""
@@ -144,6 +137,19 @@ class TestFiles:
             assert content_type == expected_content_type
         finally:
             temp_path.unlink(missing_ok=True)
+
+    @pytest.mark.parametrize("extension", [
+        ".svg", ".svgz", ".ico", ".apng", ".heif", ".heic", ".xbm",
+        ".aiff", ".wma", ".au",
+        ".mpeg", ".mpg",
+    ])
+    def test_get_content_type_refuses_what_the_asset_library_refuses(self, files, tmp_path, extension):
+        """The asset library answers a 400 for these."""
+        path = tmp_path / f"file{extension}"
+        path.write_bytes(b"test content")
+
+        with pytest.raises(ValueError, match="File is not a supported media format"):
+            files._get_content_type(path)
 
     def test_get_content_type_case_insensitive(self, files):
         """Test that file extension matching is case insensitive."""

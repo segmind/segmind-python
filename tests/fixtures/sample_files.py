@@ -228,33 +228,26 @@ def sample_file_formats():
         '.gif': 'image/gif',
         '.bmp': 'image/bmp',
         '.webp': 'image/webp',
-        '.svg': 'image/svg+xml',
-        '.ico': 'image/x-icon',
+        '.avif': 'image/avif',
         '.tif': 'image/tiff',
         '.tiff': 'image/tiff',
         '.jfif': 'image/jpeg',
         '.pjp': 'image/jpeg',
-        '.apng': 'image/apng',
-        '.svgz': 'image/svg+xml',
-        '.heif': 'image/heif',
-        '.heic': 'image/heic',
-        '.xbm': 'image/x-xbitmap',
         # Audio formats
         '.mp3': 'audio/mpeg',
         '.wav': 'audio/wav',
-        '.aiff': 'audio/aiff',
-        '.wma': 'audio/x-ms-wma',
-        '.au': 'audio/basic',
+        '.ogg': 'audio/ogg',
+        '.flac': 'audio/flac',
+        '.aac': 'audio/aac',
+        '.m4a': 'audio/mp4',
         # Video formats
         '.mp4': 'video/mp4',
         '.avi': 'video/x-msvideo',
         '.mov': 'video/quicktime',
         '.mkv': 'video/x-matroska',
-        '.wmv': 'video/x-ms-wmv',
-        '.flv': 'video/x-flv',
+        '.wmv': 'video/wmv',
+        '.flv': 'video/flv',
         '.webm': 'video/webm',
-        '.mpeg': 'video/mpeg',
-        '.mpg': 'video/mpeg',
     }
 
 
@@ -264,7 +257,9 @@ def unsupported_file_formats():
     return [
         '.txt', '.doc', '.docx', '.pdf', '.xlsx', '.zip',
         '.tar', '.gz', '.py', '.js', '.html', '.css',
-        '.json', '.xml', '.csv', '.sql', '.exe', '.dmg'
+        '.json', '.xml', '.csv', '.sql', '.exe', '.dmg',
+        '.svg', '.svgz', '.ico', '.apng', '.heif', '.heic', '.xbm',
+        '.aiff', '.wma', '.au', '.mpeg', '.mpg',
     ]
 
 

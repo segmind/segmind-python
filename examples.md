@@ -302,9 +302,9 @@ for url in result["file_urls"]:
 
 ### Supported Formats
 
-- **Images**: png, jpg, jpeg, gif, bmp, webp, svg, ico, tif, tiff, jfif, pjp, apng, svgz, heif, heic, xbm
-- **Audio**: mp3, wav, aiff, wma, au
-- **Video**: mp4, avi, mov, mkv, wmv, flv, webm, mpeg, mpg
+- **Images**: png, jpg, jpeg, gif, bmp, webp, avif, tif, tiff, jfif, pjp
+- **Audio**: mp3, wav, ogg, flac, aac, m4a
+- **Video**: mp4, avi, mov, mkv, wmv, flv, webm
 
 ## PixelFlows
 

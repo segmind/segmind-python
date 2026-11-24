@@ -6,8 +6,14 @@ All notable changes to the Segmind Python SDK are documented here.
 
 ### Fixed
 
-- **`files.upload()` accepts `.wav`.** The asset library takes it, but the SDK
-  raised `ValueError` before sending anything.
+- **`files.upload()` accepts only the types the asset library accepts.** The SDK's
+  list differed from the server's in both directions.
+  - Added: `.wav`, `.ogg`, `.flac`, `.aac`, `.m4a` and `.avif`.
+  - `.wmv` and `.flv` work: they are sent as `video/wmv` and `video/flv`, the types
+    the library takes. 1.5.1 sent types it refuses.
+  - Removed: `.svg`, `.svgz`, `.ico`, `.apng`, `.heif`, `.heic`, `.xbm`, `.aiff`,
+    `.wma`, `.au`, `.mpeg` and `.mpg`. The library refuses them, so in 1.5.1 they
+    failed with a 400. They now raise `ValueError` before anything is sent.
 
 ## 1.5.1 — 2026-11-18
 
